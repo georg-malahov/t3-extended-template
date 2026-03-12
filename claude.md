@@ -1,613 +1,165 @@
-# T3 Extended SaaS Template - Claude Code Context
+# T3 Extended SaaS Template
 
-## Overview
-
-This is a production-ready, greenfield SaaS template built on modern TypeScript infrastructure. It provides a complete foundation for building multi-tenant B2B applications with authentication, authorization, CRUD operations, testing, and deployment infrastructure pre-configured.
-
-**Key Philosophy**: Schema-driven development with end-to-end type safety, from database models through API routes to frontend React components.
+Multi-tenant SaaS template. Schema-driven development with end-to-end type safety.
 
 ## Tech Stack
 
-### Core Framework
-- **Next.js 16.1** (App Router, React Server Components, TypeScript strict mode)
-- **React 19.2** with Server Components and Actions
-- **TypeScript 5.9** (strict mode enabled)
-- **yarn 1.22.22** (package manager)
-
-### Data & Auth Layer
-- **ZenStack v3** - Schema-first ORM with declarative access policies, generates:
-  - Prisma-compatible schema
-  - Type-safe RPC API routes
-  - Frontend TanStack Query hooks
-  - All from a single `.zmodel` source
-- **Better Auth 1.5** - Modern auth library with PostgreSQL adapter
-- **PostgreSQL 16** - Primary database for both auth and application data
-- **Kysely** - Type-safe SQL query builder (used by Better Auth)
-
-### Frontend
-- **shadcn/ui** - Open-source component collection (NOT a library, copy-paste approach)
-- **Radix UI** - Unstyled, accessible component primitives
-- **Tailwind CSS 4.2** - Utility-first styling
-- **TanStack Query 5.90** - Server state management, automatically generated hooks
-- **TanStack Table 8.21** - Headless table/datagrid
-- **React Hook Form 7.71** - Form state management
-- **Zod 4.3** - Schema validation
-- **next-themes** - Theme management (dark/light mode)
-- **Lucide React** - Icon library
-- **Sonner** - Toast notifications
-
-### Testing
-- **Vitest 4.0** - Unit and integration tests
-- **Playwright 1.58** - End-to-end tests
-- **Testing Library** - React component testing utilities
-
-### DevOps & Infrastructure
-- **Docker** - Containerization and local development
-- **Docker Compose** - Multi-service orchestration
-- **Doppler** - Secrets and environment variable management
-- **GitHub Actions** - CI/CD pipelines
-- **Coolify** - Deployment platform with native PR preview support
-- **Hetzner** - Recommended hosting provider
+- Next.js 16.1 (App Router, RSC), React 19.2, TypeScript 5.9 (strict), yarn 1.22.22
+- ZenStack v3 (schema-first ORM, generates Prisma schema + TS types + TanStack Query hooks)
+- Better Auth 1.5 (PostgreSQL adapter), PostgreSQL 16, Kysely
+- shadcn/ui, Radix UI, Tailwind CSS 4.2, TanStack Query 5.90, TanStack Table 8.21
+- React Hook Form 7.71, Zod 4.3, next-themes, Lucide React, Sonner
+- Vitest 4.0, Playwright 1.58, Docker, Doppler (env management)
 
 ## Architecture
 
-### Schema-Driven Data Flow
+### Schema-Driven Flow
 
 ```
 zenstack/schema.zmodel (Single Source of Truth)
-    ↓
-ZenStack Code Generation
-    ↓
-┌─────────────────────────────────────────────────┐
-│ Generated Artifacts:                            │
-│ - Prisma Schema                                 │
-│ - TypeScript Types (models.ts, input.ts)       │
-│ - Runtime Schema (schema.ts)                    │
-│ - Lite Schema (schema-lite.ts)                  │
-└─────────────────────────────────────────────────┘
-    ↓
-┌─────────────────────────────────────────────────┐
-│ Backend: RPC API Routes                         │
-│ /api/model/[...path]/route.ts                   │
-│ - Auto-generated CRUD operations                │
-│ - Policy enforcement at data layer              │
-└─────────────────────────────────────────────────┘
-    ↓
-┌─────────────────────────────────────────────────┐
-│ Frontend: Type-Safe Hooks                       │
-│ useProject(), useOrganization(), etc.           │
-│ - Auto-generated TanStack Query hooks           │
-│ - End-to-end type safety                        │
-└─────────────────────────────────────────────────┘
+  → ZenStack codegen → Prisma schema, TS types (models.ts, input.ts), runtime schema
+  → Backend: RPC API at /api/model/[...path]/route.ts (auto-generated CRUD + policy enforcement)
+  → Frontend: Type-safe TanStack Query hooks via useClientQueries(schema)
 ```
 
 ### Database Schema Separation
 
-**Critical Design Decision**: Better Auth and ZenStack use different PostgreSQL schemas in the SAME database:
+- `auth` schema: Better Auth tables. Accessed via `AUTH_DATABASE_URL` with `search_path=auth`
+- `public` schema: App models (User, Organization, Membership, Project). Accessed via `DATABASE_URL`
+- These are SEPARATE schemas in the SAME PostgreSQL database. Do NOT mix them.
 
-- **`auth` schema** - Better Auth tables (user, session, verification, etc.)
-  - Accessed via `AUTH_DATABASE_URL` with `search_path=auth`
-- **`public` schema** - Application models (User, Organization, Membership, Project)
-  - Accessed via `DATABASE_URL` (default schema)
+### Auth Flow
 
-This separation prevents table ownership conflicts while maintaining a single PostgreSQL instance.
+1. Sign up via Better Auth → session created in `auth` schema
+2. Post-auth hook (`src/lib/provisioning.ts`) creates User, Organization, OWNER Membership in `public` schema
+3. ZenStack policies enforce multi-tenant access at data layer
 
-### Authentication Flow
+## Data Model (`zenstack/schema.zmodel`)
 
-1. User signs up via Better Auth (`/api/auth/[...all]/route.ts`)
-2. Better Auth creates session in `auth` schema
-3. Post-auth hook (`src/lib/provisioning.ts`) provisions:
-   - Application User record (public schema)
-   - Default Organization
-   - OWNER Membership
-4. Subsequent requests use session for authorization
-5. ZenStack policies enforce multi-tenant data access
+- **User**: `@id String` (matches Better Auth ID), email, memberships. `@@allow('read', auth() != null)`, `@@allow('update', auth().id == id)`
+- **Organization**: cuid id, name, slug (unique), createdById → User, memberships[], projects[]. Read: members only. Update/delete: OWNER only.
+- **Membership**: organizationId + userId (unique), role (OWNER|ADMIN|MEMBER). Read: org members. Manage: OWNER only.
+- **Project**: name, description?, status (ACTIVE|PAUSED|ARCHIVED), organizationId, creatorId. Scoped to org membership.
 
-## Data Model
+Policy pattern: `@@allow('read', auth() != null && organization.memberships?[userId == auth().id])`
 
-### Core Entities
+## Key Files
 
-**User** (`src/lib/zenstack/generated/models.ts`)
-- Synchronized with Better Auth session
-- Created via post-signup provisioning hook
-- ID matches Better Auth user ID
-- Access: Users can read all users, update only themselves
+- `zenstack/schema.zmodel` — THE source of truth for data model
+- `src/lib/db.ts` — ZenStack client, `bindDbAuth()`
+- `src/lib/auth.ts` — Better Auth config with provisioning hook
+- `src/lib/session.ts` — `getSession()`, `requireSession()`
+- `src/lib/env.ts` — Validated env vars (Zod)
+- `src/lib/provisioning.ts` — Post-signup workspace creation
+- `src/lib/auth-context.ts` — `sessionToDbAuth()` converter
+- `src/app/api/model/[...path]/route.ts` — ZenStack RPC handler
+- `src/app/providers.tsx` — QueryClient + QuerySettingsProvider
+- `src/components/ui/` — shadcn/ui primitives (copy-paste, NOT a library)
+- `src/components/[domain]/` — Business logic (projects/, etc.)
+- `src/lib/zenstack/generated/` — Auto-generated, NEVER edit manually
 
-**Organization**
-- Multi-tenant container
-- Each org has a unique slug
-- Policies enforce member-only access
-- Only OWNER can update/delete
+## Makefile (Primary Interface)
 
-**Membership**
-- Junction table: User ↔ Organization
-- Roles: OWNER, ADMIN, MEMBER (enum)
-- Unique constraint on (organizationId, userId)
-- Only OWNER can manage memberships
+- `make dev` — Docker-based dev (recommended)
+- `make dev-local` — Native Node.js dev
+- `make codegen` — Regenerate ZenStack artifacts (**ALWAYS** after schema.zmodel changes)
+- `make db-push` — Push schema to PostgreSQL (**ALWAYS** after schema.zmodel changes)
+- `make lint` — ESLint
+- `make typecheck` — TypeScript type checking
+- `make build` — Production build
+- `make test-unit` — Vitest unit tests
+- `make test-e2e` — Playwright E2E tests
+- `make db-seed` — Seed sample data
 
-**Project** (Example Business Entity)
-- Belongs to one Organization
-- Scoped by organization membership
-- Members can read, OWNER/ADMIN can modify
-- Demonstrates tenant-scoped CRUD pattern
+## CRITICAL: After Modifying `schema.zmodel`
 
-### Access Control Patterns
+1. `make codegen` — regenerate TypeScript types
+2. `make db-push` — sync database
+3. Generated files land in `src/lib/zenstack/generated/` (NEVER edit these manually)
 
-ZenStack policies in `zenstack/schema.zmodel` use declarative rules:
+## Adding a New Entity (Standard Pattern)
 
-```zmodel
-@@allow('read', auth() != null && organization.memberships?[userId == auth().id])
+1. Define model in `zenstack/schema.zmodel` with `@@allow` access policies
+2. `make codegen && make db-push`
+3. Create `src/components/[entity]/[entity]-view.tsx` using:
+   - `useClientQueries(schema)` from `@zenstackhq/tanstack-query/react`
+   - `schema` from `@/lib/zenstack/generated/schema-lite` (NOT `schema.ts`)
+   - React Hook Form + zodResolver for create/edit forms
+   - DataTable from `@/components/ui/data-table` for listings
+4. Create/update page in `src/app/` passing `organizationId` + `userId` to the view
+5. Write E2E test in `tests/e2e/[entity].spec.ts` covering full CRUD flow
+6. Write unit tests for any utility/helper functions created
+
+## Code Patterns
+
+### Server Component (protected page)
+
+```tsx
+import { requireSession } from '@/lib/session';
+import { sessionToDbAuth } from '@/lib/auth-context';
+import { bindDbAuth } from '@/lib/db';
+
+export default async function Page() {
+  const session = await requireSession();
+  const authContext = sessionToDbAuth(session);
+  const authedDb = bindDbAuth(authContext);
+  // fetch data, pass to client components
+}
 ```
 
-These compile to runtime checks enforced at the data layer, not in route handlers.
+### Client Component (CRUD view)
 
-## File Structure
+```tsx
+'use client';
+import { useClientQueries } from '@zenstackhq/tanstack-query/react';
+import { schema } from '@/lib/zenstack/generated/schema-lite';
 
+export function EntityView({ organizationId, userId }: Props) {
+  const client = useClientQueries(schema);
+  const query = client.entity.useFindMany({ where: { organizationId } });
+  const create = client.entity.useCreate();
+  // React Hook Form + zodResolver for forms, DataTable for list
+}
 ```
-/
-├── .cursor/plans/                    # Cursor IDE planning artifacts
-├── .github/workflows/                # CI/CD pipelines
-│   ├── ci.yml                        # Lint, type-check, unit tests, build
-│   └── e2e.yml                       # Playwright E2E tests
-├── scripts/                          # Utility scripts
-│   └── seed.ts                       # Database seeding
-├── src/
-│   ├── app/                          # Next.js App Router
-│   │   ├── api/
-│   │   │   ├── auth/[...all]/        # Better Auth catch-all route
-│   │   │   └── model/[...path]/      # ZenStack RPC API
-│   │   ├── dashboard/                # Protected dashboard
-│   │   ├── sign-in/                  # Auth pages
-│   │   ├── sign-up/
-│   │   ├── layout.tsx                # Root layout (providers, fonts)
-│   │   ├── page.tsx                  # Landing page
-│   │   └── providers.tsx             # React Query, theme providers
-│   ├── components/
-│   │   ├── auth/                     # Auth-specific components
-│   │   ├── layout/                   # Shell, header, nav components
-│   │   ├── projects/                 # Business logic components
-│   │   └── ui/                       # shadcn/ui components (copied)
-│   ├── lib/
-│   │   ├── auth.ts                   # Better Auth server config
-│   │   ├── auth-client.ts            # Better Auth client
-│   │   ├── auth-context.ts           # Auth state management
-│   │   ├── db.ts                     # Database client factory
-│   │   ├── env.ts                    # Validated environment variables
-│   │   ├── provisioning.ts           # Post-signup user provisioning
-│   │   ├── session.ts                # Session helpers
-│   │   ├── utils.ts                  # Utility functions (cn, etc.)
-│   │   └── zenstack/generated/       # Auto-generated ZenStack artifacts
-│   │       ├── schema.ts             # Runtime schema
-│   │       ├── schema-lite.ts        # Frontend-safe schema
-│   │       ├── models.ts             # TypeScript types
-│   │       └── input.ts              # Input validation types
-│   └── test/
-│       └── setup.ts                  # Vitest configuration
-├── tests/e2e/                        # Playwright tests
-├── zenstack/
-│   └── schema.zmodel                 # SINGLE SOURCE OF TRUTH for data model
-├── docker-compose.yml                # Local development stack
-├── Dockerfile                        # Production image
-├── Makefile                          # Task runner (primary interface)
-├── next.config.ts                    # Next.js configuration
-├── playwright.config.ts              # E2E test configuration
-├── vitest.config.mts                 # Unit test configuration
-├── doppler.yaml                      # Doppler CLI configuration
-├── proxy.ts                          # Middleware for auth redirects
-└── package.json                      # Dependencies and scripts
-```
-
-## Development Workflow
-
-### Prerequisites
-- Node 20.19.0+ (see `.nvmrc`)
-- yarn 1.22.22
-- Docker Desktop or Engine
-- Doppler CLI (`brew install dopplerhq/cli/doppler`)
-
-### First-Time Setup
-
-1. **Configure Doppler**:
-   ```bash
-   doppler login
-   doppler setup
-   # Select project and config (typically 'dev')
-   ```
-
-2. **Required Environment Variables** (in Doppler `dev` config):
-   ```
-   APP_URL=http://localhost:3000
-   BETTER_AUTH_URL=http://localhost:3000/api/auth
-   AUTH_SECRET=<generate-random-32-char-string>
-   DATABASE_URL=postgresql://postgres:postgres@db:5432/app
-   AUTH_DATABASE_URL=postgresql://postgres:postgres@db:5432/app?search_path=auth
-   PLAYWRIGHT_BASE_URL=http://localhost:3000
-   DOPPLER_PROJECT=<your-project>
-   DOPPLER_CONFIG=dev
-   ```
-
-3. **Start Local Stack**:
-   ```bash
-   make dev
-   ```
-
-   This single command:
-   - Starts PostgreSQL 16 container
-   - Builds and starts Next.js app container
-   - Runs `yarn install`
-   - Generates ZenStack artifacts
-   - Migrates Better Auth schema
-   - Pushes ZenStack schema to DB
-   - Starts Next.js dev server
-
-### Makefile Targets (Primary Interface)
-
-**Development**:
-- `make dev` - Docker-based local development (recommended)
-- `make dev-local` - Native Node.js development (no Docker)
-
-**Code Generation**:
-- `make codegen` - Regenerate ZenStack TypeScript artifacts
-- `make auth-migrate` - Apply Better Auth schema migrations
-
-**Database**:
-- `make db-push` - Push ZenStack schema to PostgreSQL
-- `make db-seed` - Seed database with sample data
-
-**Quality**:
-- `make lint` - ESLint
-- `make typecheck` - TypeScript type checking
-- `make build` - Production build
-- `make test-unit` - Vitest unit tests
-- `make test-e2e` - Playwright E2E tests
-
-### Code Generation Workflow
-
-**CRITICAL**: After modifying `zenstack/schema.zmodel`:
-
-```bash
-make codegen    # Regenerate TypeScript types
-make db-push    # Push schema changes to DB
-```
-
-ZenStack generates:
-- Prisma schema (in memory, not committed)
-- TypeScript types (`models.ts`, `input.ts`)
-- Runtime schemas (`schema.ts`, `schema-lite.ts`)
-- TanStack Query hooks (consumed via `@zenstackhq/tanstack-query`)
-
-### Adding New Features
-
-**Pattern for New Entity**:
-
-1. **Define in ZenStack Schema** (`zenstack/schema.zmodel`):
-   ```zmodel
-   model Task {
-     id             String @id @default(cuid())
-     title          String
-     organizationId String
-     organization   Organization @relation(fields: [organizationId], references: [id])
-
-     @@allow('read', organization.memberships?[userId == auth().id])
-     @@allow('create', organization.memberships?[userId == auth().id])
-   }
-   ```
-
-2. **Regenerate**:
-   ```bash
-   make codegen
-   make db-push
-   ```
-
-3. **Use in Frontend** (`src/components/tasks/tasks-view.tsx`):
-   ```typescript
-   import { useTask } from '@zenstackhq/tanstack-query/runtime';
-
-   function TasksView({ orgId }: { orgId: string }) {
-     const { data: tasks } = useTask().useFindMany({
-       where: { organizationId: orgId },
-       orderBy: { createdAt: 'desc' }
-     });
-     // ...
-   }
-   ```
-
-No API route code needed - the RPC endpoint is auto-generated.
-
-## Testing Strategy
-
-### Unit Tests (Vitest)
-
-- **Location**: Co-located with source files (`*.test.ts`, `*.test.tsx`)
-- **Focus**: Pure functions, utilities, client-side logic
-- **Example**: `src/lib/auth-context.test.ts`
-- **Run**: `make test-unit` or `yarn test:unit`
-
-### E2E Tests (Playwright)
-
-- **Location**: `tests/e2e/`
-- **Focus**: User flows across multiple pages
-- **Example**: `tests/e2e/auth-and-projects.spec.ts`
-  - Sign up flow
-  - Sign in flow
-  - Protected route access
-  - Project CRUD operations
-- **Run**: `make test-e2e` or `yarn test:e2e`
-
-**Note**: Next.js guidance recommends Playwright for async Server Component testing rather than unit tests.
-
-### Test Database
-
-E2E tests use a separate `test` Doppler config with isolated DATABASE_URL.
-
-## Deployment
-
-### Coolify Configuration
-
-**Production App**:
-- Type: Application (not Docker Compose)
-- Build Pack: Dockerfile
-- PostgreSQL: Dedicated resource/service
-- Doppler: `prod` config via `DOPPLER_TOKEN` secret
-
-**Preview Deployments**:
-- Enable native PR preview via Coolify GitHub App
-- Wildcard preview domain (e.g., `*.preview.yourapp.com`)
-- Doppler: `preview` config (separate secrets from prod)
-- PostgreSQL: Dedicated preview database resource
-- Auto-deploy on PR creation
-- Auto-cleanup on PR merge/close
-
-### Environment Variables by Environment
-
-| Variable | dev | test | ci | preview | prod |
-|----------|-----|------|----|---------|----- |
-| APP_URL | localhost:3000 | localhost:3000 | CI-specific | preview.domain | production.domain |
-| DATABASE_URL | Docker service | Test DB | CI service | Preview DB | Production DB |
-| AUTH_SECRET | dev-secret | test-secret | CI-secret | preview-secret | prod-secret |
-
-**Managed via Doppler configs**: `dev`, `test`, `ci`, `preview`, `prod`
-
-### CI/CD Pipelines
-
-**`.github/workflows/ci.yml`**:
-- Triggers: Push, Pull Request
-- Steps:
-  1. Checkout code
-  2. Install Doppler CLI
-  3. `doppler run -- yarn install`
-  4. `doppler run -- yarn db:generate`
-  5. `doppler run -- yarn typecheck`
-  6. `doppler run -- yarn lint`
-  7. `doppler run -- yarn test:unit`
-  8. `doppler run -- yarn build`
-- Secrets: `DOPPLER_TOKEN` (scoped to `ci` config)
-
-**`.github/workflows/e2e.yml`**:
-- Triggers: Pull Request
-- PostgreSQL service container
-- Playwright browsers installed
-- Full E2E suite against test database
-
-## Key Patterns & Conventions
-
-### Component Organization
-
-- **`/components/ui`** - Primitive shadcn components (button, input, table, etc.)
-- **`/components/layout`** - Shell, navigation, header components
-- **`/components/auth`** - Authentication-specific UI
-- **`/components/[domain]`** - Business logic components (projects, tasks, etc.)
 
 ### Form Pattern
 
-```typescript
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-
-const schema = z.object({
-  name: z.string().min(1),
-});
-
-function MyForm() {
-  const form = useForm({
-    resolver: zodResolver(schema),
-  });
-
-  // Use with shadcn form components
-}
+```tsx
+const formSchema = z.object({ name: z.string().min(2) });
+const form = useForm({ resolver: zodResolver(formSchema) });
+// Use shadcn Label, Input, Button components
 ```
 
-### Server Component Pattern
+## Testing
 
-```typescript
-import { getSession } from '@/lib/session';
-import { redirect } from 'next/navigation';
+### Unit Tests (Vitest)
 
-export default async function DashboardPage() {
-  const session = await getSession();
-  if (!session) redirect('/sign-in');
+- Co-located: `src/**/*.test.ts` (next to the file they test)
+- Pattern: `describe`/`it`/`expect` from Vitest
+- Run: `yarn test:unit` or `make test-unit`
+- Reference: `src/lib/auth-context.test.ts`
 
-  // Server-side data fetching
-  return <ClientComponent userId={session.user.id} />;
-}
-```
+### E2E Tests (Playwright)
 
-### Client Component + TanStack Query
+- Location: `tests/e2e/*.spec.ts`
+- Pattern: Full user-flow style, unique data with `Date.now()`
+- Run: `yarn test:e2e` or `make test-e2e`
+- Reference: `tests/e2e/auth-and-projects.spec.ts`
 
-```typescript
-'use client';
+### Test Requirements
 
-import { useProject } from '@zenstackhq/tanstack-query/runtime';
+- Every new feature or bug fix MUST have corresponding tests
+- No stub tests (`expect(true).toBe(true)`) — assert real behavior
+- Cover happy path AND at least one error/edge case
+- Unit tests: pure functions, utilities, helpers
+- E2E tests: user flows, CRUD operations, auth flows
 
-export function ProjectsList({ orgId }: { orgId: string }) {
-  const { data, isLoading } = useProject().useFindMany({
-    where: { organizationId: orgId },
-  });
+## Critical Gotchas
 
-  // Automatically type-safe, auto-generated hook
-}
-```
-
-### Table Pattern (TanStack Table)
-
-See `src/components/ui/data-table.tsx` for reusable DataTable component.
-
-```typescript
-const columns: ColumnDef<Project>[] = [
-  { accessorKey: 'name', header: 'Name' },
-  // ...
-];
-
-<DataTable columns={columns} data={projects} />
-```
-
-## Important Gotchas
-
-### 1. Schema Separation
-- Better Auth uses `auth` schema, app models use `public` schema
-- Forgetting `search_path=auth` in `AUTH_DATABASE_URL` causes table conflicts
-- The application User model and Better Auth user table are SEPARATE
-
-### 2. Code Generation Dependencies
-- Always run `make codegen` after schema changes
-- Always run `make db-push` to sync database
-- TanStack Query hooks won't reflect changes until codegen runs
-- Missing step = type errors or runtime failures
-
-### 3. Authentication vs Authorization
-- `proxy.ts` provides OPTIMISTIC redirects only
-- Real auth checks happen in Server Components and ZenStack policies
-- Never rely solely on client-side auth state
-
-### 4. Policy Enforcement
-- ZenStack policies are evaluated at data access time
-- Bypassing the ZenStack enhanced client bypasses policies
-- Always use `getEnhancedPrisma(userId)` in server code
-
-### 5. Doppler Required
-- App will NOT start without Doppler-injected env vars
-- `src/lib/env.ts` validates all required variables at startup
-- Fail-fast approach prevents runtime config bugs
-
-### 6. Docker-First Development
-- `make dev` is recommended over native Node.js
-- Ensures PostgreSQL, app, and network are configured identically across machines
-- `make dev-local` exists but requires manual PostgreSQL setup
-
-### 7. Coolify Preview Limitations
-- Don't bundle DB + app in Docker Compose for previews
-- Use separate PostgreSQL resource/service
-- Container name coupling causes issues (see Coolify docs)
-
-## Extending the Template
-
-### Adding shadcn/ui Components
-
-```bash
-npx shadcn@latest add [component-name]
-```
-
-Components are copied to `src/components/ui/`, not installed as dependencies.
-
-### Adding Authentication Providers
-
-Better Auth supports OAuth providers. Update `src/lib/auth.ts`:
-
-```typescript
-import { github } from 'better-auth/social-providers';
-
-export const auth = betterAuth({
-  // ...
-  socialProviders: {
-    github: {
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-    },
-  },
-});
-```
-
-### Multi-Tenant Best Practices
-
-1. Always scope queries by organizationId
-2. Enforce access in ZenStack policies, not application code
-3. Use `organization.memberships?[userId == auth().id]` pattern
-4. Never expose cross-tenant data, even in error messages
-
-## Common Tasks
-
-### Reset Local Database
-
-```bash
-docker compose down -v  # Delete volume
-make dev                # Rebuilds from scratch
-```
-
-### Add New Environment Variable
-
-1. Add to Doppler config
-2. Add to `src/lib/env.ts` validation
-3. Restart app
-
-### Debug Session Issues
-
-```typescript
-import { getSession } from '@/lib/session';
-
-const session = await getSession();
-console.log(session);
-```
-
-Session stored in Better Auth `session` table (`auth` schema).
-
-### Seed Database
-
-```bash
-make db-seed
-```
-
-Seeds one project for the first user found. Customize `scripts/seed.ts`.
-
-## Performance Considerations
-
-- Server Components fetch data server-side (no waterfalls)
-- TanStack Query caches client-side queries
-- ZenStack policies add overhead - profile if querying large datasets
-- Use `lite` schema in frontend to avoid sending policies to client
-
-## Security Notes
-
-- Environment secrets in Doppler, never in code
-- ZenStack policies prevent unauthorized access at data layer
-- Better Auth handles password hashing, session management
-- CSRF protection enabled by default in Better Auth
-- Use `AUTH_SECRET` for signing tokens (rotate periodically)
-
-## Migration Path
-
-This template is designed to be forked and customized:
-
-1. Clone the repo
-2. Update `package.json` name
-3. Replace `Project` entity with your domain model
-4. Customize auth flow (add OAuth, 2FA, etc.)
-5. Update branding, theme, and UI components
-
-The schema-driven approach means domain changes happen primarily in `zenstack/schema.zmodel`, not scattered across routes and components.
-
-## Resources
-
-- [Next.js 16 Docs](https://nextjs.org/docs)
-- [ZenStack v3 Docs](https://zenstack.dev/docs)
-- [Better Auth Docs](https://www.better-auth.com/docs)
-- [shadcn/ui Docs](https://ui.shadcn.com)
-- [TanStack Query Docs](https://tanstack.com/query)
-- [Coolify Docs](https://coolify.io/docs)
-- [Doppler Docs](https://docs.doppler.com)
-
-## Support & Contributions
-
-This template is a starting point. Modify freely for your use case. The architectural decisions (schema-driven, Doppler-based env, Docker-first) are intentional but not mandatory.
-
-For questions about specific technologies, refer to their respective documentation linked above.
+1. Better Auth `auth` schema vs ZenStack `public` schema are SEPARATE. Never cross them.
+2. ALWAYS `make codegen` then `make db-push` after `schema.zmodel` changes.
+3. `proxy.ts` is OPTIMISTIC only. Real auth is in Server Components + ZenStack policies.
+4. Always use `bindDbAuth()`/`getEnhancedPrisma()` — bypassing ZenStack bypasses policies.
+5. Generated files in `src/lib/zenstack/generated/` are excluded from ESLint. Never edit them.
+6. App requires Doppler-injected env vars. `src/lib/env.ts` validates at startup.
+7. shadcn/ui components are COPIED into `src/components/ui/`, not installed as a package.
