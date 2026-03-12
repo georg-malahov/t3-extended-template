@@ -1,0 +1,48 @@
+services:
+  db:
+    image: ${POSTGRES_IMAGE:-postgres:16}
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      target: deps
+    command: >
+      sh -lc "yarn install --frozen-lockfile &&
+      yarn db:generate &&
+      yarn auth:migrate &&
+      yarn db:push &&
+      yarn dev --hostname 0.0.0.0 --port 3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql://postgres:postgres@db:5432/app?options=-c%20search_path%3Dauth}
+      AUTH_SECRET: ${AUTH_SECRET:-dev-only-change-me}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      CHOKIDAR_USEPOLLING: "true"
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/app}
+      DOPPLER_CONFIG: ${DOPPLER_CONFIG:-dev}
+      DOPPLER_PROJECT: ${DOPPLER_PROJECT:-t3-extended-template}
+      NODE_ENV: development
+      PLAYWRIGHT_BASE_URL: ${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:3000}
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - app-node-modules:/app/node_modules
+
+volumes:
+  app-node-modules:
+  postgres-data:

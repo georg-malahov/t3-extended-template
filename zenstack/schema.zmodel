@@ -1,0 +1,91 @@
+datasource db {
+  provider = 'postgresql'
+  url = env('DATABASE_URL')
+}
+
+plugin ts {
+  provider = '@core/typescript'
+  output = '../src/lib/zenstack/generated'
+  lite = true
+}
+
+plugin policy {
+  provider = '@zenstackhq/plugin-policy'
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model User {
+  id                   String @id
+  email                String @unique
+  name                 String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  memberships          Membership[]
+  createdOrganizations Organization[] @relation("OrganizationOwner")
+  createdProjects      Project[] @relation("ProjectCreator")
+
+  @@auth
+  @@allow('create', auth() != null && auth().id == id)
+  @@allow('read', auth() != null)
+  @@allow('update', auth() != null && auth().id == id)
+}
+
+model Organization {
+  id          String @id @default(cuid())
+  name        String
+  slug        String @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User @relation("OrganizationOwner", fields: [createdById], references: [id])
+  createdById String
+  memberships Membership[]
+  projects    Project[]
+
+  @@allow('create', auth() != null && auth().id == createdById)
+  @@allow('read', auth() != null && memberships?[userId == auth().id])
+  @@allow('update,delete', auth() != null && memberships?[userId == auth().id && role == OWNER])
+}
+
+model Membership {
+  id             String @id @default(cuid())
+  role           OrgRole @default(MEMBER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+
+  @@unique([organizationId, userId])
+  @@allow('create', auth() != null && auth().id == userId)
+  @@allow('read', auth() != null && organization.memberships?[userId == auth().id])
+  @@allow('update,delete', auth() != null && organization.memberships?[userId == auth().id && role == OWNER])
+}
+
+model Project {
+  id             String @id @default(cuid())
+  name           String
+  description    String?
+  status         ProjectStatus @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  creator        User @relation("ProjectCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId      String
+
+  @@allow('read', auth() != null && organization.memberships?[userId == auth().id])
+  @@allow('create', auth() != null && creatorId == auth().id && organization.memberships?[userId == auth().id])
+  @@allow('update,delete', auth() != null && organization.memberships?[userId == auth().id])
+}

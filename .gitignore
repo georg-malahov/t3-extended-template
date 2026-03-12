@@ -1,0 +1,11 @@
+.next
+.yarn-integrity
+coverage
+node_modules
+playwright-report
+test-results
+yarn-error.log
+.DS_Store
+
+# local tooling state
+.doppler
