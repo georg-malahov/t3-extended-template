@@ -26,7 +26,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
-      AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app?search_path=auth
+      AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app?options=-csearch_path%3Dauth
       AUTH_SECRET: ci-secret-change-in-production
       APP_URL: http://localhost:3000
       BETTER_AUTH_URL: http://localhost:3000/api/auth
