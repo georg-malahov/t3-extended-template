@@ -1,6 +1,5 @@
 SHELL := /bin/bash
 
-DOPPLER ?= doppler run --
 DOCKER_COMPOSE ?= docker compose
 YARN ?= yarn
 
@@ -10,16 +9,16 @@ install:
 	$(YARN) install
 
 dev:
-	$(DOPPLER) $(DOCKER_COMPOSE) up --build
+	$(DOCKER_COMPOSE) up --build
 
 dev-local:
-	$(DOPPLER) $(YARN) dev
+	$(YARN) dev
 
 build:
-	$(DOPPLER) sh -lc "yarn db:generate && yarn build"
+	yarn db:generate && yarn build
 
 start:
-	$(DOPPLER) $(YARN) start
+	$(YARN) start
 
 lint:
 	$(YARN) lint
@@ -34,19 +33,19 @@ test-unit:
 	$(YARN) test:unit
 
 test-e2e:
-	$(DOPPLER) sh -lc "yarn auth:migrate && yarn db:push && yarn test:e2e"
+	yarn auth:migrate && yarn db:push && yarn test:e2e
 
 codegen:
-	$(DOPPLER) $(YARN) db:generate
+	$(YARN) db:generate
 
 db-push:
-	$(DOPPLER) $(YARN) db:push
+	$(YARN) db:push
 
 db-seed:
-	$(DOPPLER) $(YARN) db:seed
+	$(YARN) db:seed
 
 auth-generate:
-	$(DOPPLER) $(YARN) auth:generate
+	$(YARN) auth:generate
 
 auth-migrate:
-	$(DOPPLER) $(YARN) auth:migrate
+	$(YARN) auth:migrate
