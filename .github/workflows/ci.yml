@@ -45,6 +45,9 @@ jobs:
       - name: Generate schema artifacts
         run: yarn db:generate
 
+      - name: Create auth schema
+        run: PGPASSWORD=postgres psql -h localhost -U postgres -d app -c "CREATE SCHEMA IF NOT EXISTS auth;"
+
       - name: Prepare database
         run: yarn auth:migrate && yarn db:push
 
