@@ -24,6 +24,13 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
+      AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app?search_path=auth
+      AUTH_SECRET: ci-secret-change-in-production
+      APP_URL: http://localhost:3000
+      BETTER_AUTH_URL: http://localhost:3000/api/auth
+
     steps:
       - uses: actions/checkout@v4
 
@@ -32,21 +39,14 @@ jobs:
           node-version: 20.19.0
           cache: yarn
 
-      - name: Install Doppler CLI
-        run: curl -Ls https://cli.doppler.com/install.sh | sudo sh
-
       - name: Install dependencies
         run: yarn install --frozen-lockfile --ignore-engines
 
       - name: Generate schema artifacts
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: doppler run --config ci -- yarn db:generate
+        run: yarn db:generate
 
       - name: Prepare database
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: doppler run --config ci -- sh -lc "yarn auth:migrate && yarn db:push"
+        run: yarn auth:migrate && yarn db:push
 
       - name: Lint
         run: yarn lint
@@ -58,6 +58,4 @@ jobs:
         run: yarn test:unit
 
       - name: Production build
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: doppler run --config ci -- yarn build
+        run: yarn build
