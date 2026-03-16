@@ -11,11 +11,13 @@ const vercelBranchUrl = process.env.VERCEL_BRANCH_URL
   ? `https://${process.env.VERCEL_BRANCH_URL}`
   : undefined;
 
-// Derive AUTH_DATABASE_URL from DATABASE_URL by appending search_path=auth
-// This ensures it works with Neon-Vercel integration's per-branch URLs
+// Derive AUTH_DATABASE_URL from DATABASE_URL by appending search_path=auth.
+// Uses DATABASE_URL_UNPOOLED (if available) because Neon's pooler doesn't
+// support search_path in startup options.
 function deriveAuthDatabaseUrl(): string | undefined {
   if (process.env.AUTH_DATABASE_URL) return process.env.AUTH_DATABASE_URL;
-  const dbUrl = process.env.DATABASE_URL;
+  // Prefer unpooled for Neon compatibility with search_path option
+  const dbUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
   if (!dbUrl) return undefined;
   const separator = dbUrl.includes("?") ? "&" : "?";
   return `${dbUrl}${separator}options=-c%20search_path%3Dauth`;
