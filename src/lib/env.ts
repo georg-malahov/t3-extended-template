@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+// Vercel provides VERCEL_URL (without protocol) for preview/production deploys
+const vercelUrl = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : undefined;
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   APP_URL: z.url(),
@@ -14,11 +19,11 @@ const envSchema = z.object({
 
 const parsed = envSchema.safeParse({
   NODE_ENV: process.env.NODE_ENV,
-  APP_URL: process.env.APP_URL,
+  APP_URL: process.env.APP_URL ?? vercelUrl,
   DATABASE_URL: process.env.DATABASE_URL,
   AUTH_DATABASE_URL: process.env.AUTH_DATABASE_URL ?? process.env.DATABASE_URL,
   AUTH_SECRET: process.env.AUTH_SECRET,
-  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? process.env.APP_URL,
+  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? process.env.APP_URL ?? vercelUrl,
   PLAYWRIGHT_BASE_URL: process.env.PLAYWRIGHT_BASE_URL,
   DOPPLER_PROJECT: process.env.DOPPLER_PROJECT,
   DOPPLER_CONFIG: process.env.DOPPLER_CONFIG,

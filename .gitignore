@@ -7,6 +7,11 @@ test-results
 yarn-error.log
 .DS_Store
 
+# environment files (managed by Doppler — never commit secrets)
+.env
+.env.local
+.env*.local
+
 # local tooling state
 .doppler
 .claude/settings.local.json

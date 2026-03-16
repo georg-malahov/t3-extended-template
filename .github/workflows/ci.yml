@@ -24,41 +24,33 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
-      AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app?options=-csearch_path%3Dauth
-      AUTH_SECRET: ci-secret-change-in-production
-      APP_URL: http://localhost:3000
-      BETTER_AUTH_URL: http://localhost:3000/api/auth
-
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Setup database
+        uses: ./.github/actions/setup-db
         with:
-          node-version: 20.19.0
-          cache: yarn
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-engines
-
-      - name: Generate schema artifacts
-        run: yarn db:generate
-
-      - name: Create auth schema
-        run: PGPASSWORD=postgres psql -h localhost -U postgres -d app -c "CREATE SCHEMA IF NOT EXISTS auth;"
-
-      - name: Prepare database
-        run: yarn auth:migrate && yarn db:push
+          doppler-token: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Lint
-        run: yarn lint
+        run: doppler run -- yarn lint
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Typecheck
-        run: yarn typecheck
+        run: doppler run -- yarn typecheck
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Unit tests
-        run: yarn test:unit
+        run: doppler run -- yarn test:unit
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
       - name: Production build
-        run: yarn build
+        run: doppler run -- yarn build
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}

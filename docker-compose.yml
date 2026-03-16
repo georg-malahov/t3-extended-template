@@ -28,14 +28,16 @@ services:
       db:
         condition: service_healthy
     environment:
-      APP_URL: ${APP_URL:-http://localhost:3000}
+      # DB host is "db" container, not localhost — always override
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/app}
       AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql://postgres:postgres@db:5432/app?options=-csearch_path%3Dauth}
+      # Defaults work out of the box; override via shell env or `doppler run -- docker compose up`
+      APP_URL: ${APP_URL:-http://localhost:3000}
       AUTH_SECRET: ${AUTH_SECRET:-dev-only-change-me}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000/api/auth}
-      CHOKIDAR_USEPOLLING: "true"
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/app}
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       PLAYWRIGHT_BASE_URL: ${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:3000}
+      CHOKIDAR_USEPOLLING: "true"
     ports:
       - "3000:3000"
     volumes:
