@@ -104,4 +104,57 @@ test.describe("project CRUD", () => {
     expect(firstRowText).toContain(project3);
     expect(lastRowText).toContain(project1);
   });
+
+  test("submitting create form with empty name shows validation error", async ({
+    page,
+  }) => {
+    await signUpAndLogin(page);
+
+    // Leave name empty, click Create
+    await page.getByRole("button", { name: "Create" }).click();
+
+    // Validation error should appear under the Name field
+    const nameError = page.locator(".text-destructive").first();
+    await expect(nameError).toBeVisible({ timeout: 5000 });
+
+    // No project should be created - empty state should still show
+    await expect(page.getByText("Create your first project.")).toBeVisible();
+  });
+
+  test("submitting create form with 1-character name shows validation error", async ({
+    page,
+  }) => {
+    await signUpAndLogin(page);
+
+    await page.getByLabel("Name").fill("A");
+    await page.getByRole("button", { name: "Create" }).click();
+
+    // Validation error should appear for min 2 chars
+    await expect(page.locator(".text-destructive")).toBeVisible({ timeout: 5000 });
+  });
+
+  test("create button shows 'Creating...' loading state during submission", async ({
+    page,
+  }) => {
+    await signUpAndLogin(page);
+
+    // Intercept the API request and delay the response
+    await page.route("**/api/model/**", async (route) => {
+      // Only delay POST requests (create)
+      if (route.request().method() === "POST") {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      await route.continue();
+    });
+
+    const projectName = `Loading ${Date.now()}`;
+    await page.getByLabel("Name").fill(projectName);
+    await page.getByRole("button", { name: "Create" }).click();
+
+    // Button should show loading state
+    await expect(page.getByRole("button", { name: "Creating..." })).toBeVisible({ timeout: 5000 });
+
+    // Eventually it should revert back to "Create"
+    await expect(page.getByRole("button", { name: "Create" })).toBeVisible({ timeout: 15000 });
+  });
 });

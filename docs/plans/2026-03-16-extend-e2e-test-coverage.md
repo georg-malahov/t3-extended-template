@@ -57,10 +57,10 @@ Split the monolithic e2e test into focused test files with shared auth helpers. 
 **Files:**
 - Modify: `tests/e2e/projects.spec.ts`
 
-- [ ] Test: submitting create form with empty name shows validation error (name min 2 chars)
-- [ ] Test: submitting create form with 1-character name shows validation error
-- [ ] Test: create button shows "Creating..." loading state during submission (use request interception to slow the request)
-- [ ] Run `make test-e2e` - must pass before task 5
+- [x] Test: submitting create form with empty name shows validation error (name min 2 chars)
+- [x] Test: submitting create form with 1-character name shows validation error
+- [x] Test: create button shows "Creating..." loading state during submission (use request interception to slow the request)
+- [x] Run `make test-e2e` - must pass before task 5
 
 ### Task 5: Verify acceptance criteria
 
