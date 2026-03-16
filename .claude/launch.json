@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "next-dev",
-      "runtimeExecutable": "yarn",
+      "runtimeExecutable": "make",
       "runtimeArgs": ["dev"],
       "port": 3000
     }
