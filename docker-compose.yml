@@ -21,6 +21,7 @@ services:
     command: >
       sh -lc "yarn install --frozen-lockfile &&
       yarn db:generate &&
+      node -e \"const {Client}=require('pg');const c=new Client(process.env.DATABASE_URL);c.connect().then(()=>c.query('CREATE SCHEMA IF NOT EXISTS auth')).then(()=>c.end())\" &&
       yarn auth:migrate &&
       yarn db:push &&
       yarn dev --hostname 0.0.0.0 --port 3000"
