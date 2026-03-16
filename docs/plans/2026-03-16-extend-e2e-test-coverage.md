@@ -34,11 +34,11 @@ Split the monolithic e2e test into focused test files with shared auth helpers. 
 **Files:**
 - Create: `tests/e2e/auth.spec.ts`
 
-- [ ] Test: sign-up creates account and redirects to dashboard with workspace visible
-- [ ] Test: sign-in with existing credentials reaches dashboard
-- [ ] Test: sign-in with wrong password shows error
-- [ ] Test: unauthenticated user visiting /dashboard is redirected to sign-in
-- [ ] Run `make test-e2e` - must pass before task 3
+- [x] Test: sign-up creates account and redirects to dashboard with workspace visible
+- [x] Test: sign-in with existing credentials reaches dashboard
+- [x] Test: sign-in with wrong password shows error
+- [x] Test: unauthenticated user visiting /dashboard is redirected to sign-in
+- [x] Run `make test-e2e` - must pass before task 3
 
 ### Task 3: Add comprehensive project CRUD tests
 
