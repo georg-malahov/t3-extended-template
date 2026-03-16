@@ -144,7 +144,8 @@ const form = useForm({ resolver: zodResolver(formSchema) });
 - Location: `tests/e2e/*.spec.ts`
 - Pattern: Full user-flow style, unique data with `Date.now()`
 - Run: `yarn test:e2e` or `make test-e2e`
-- Reference: `tests/e2e/auth-and-projects.spec.ts`
+- Shared helpers: `tests/e2e/helpers/` (e.g., `auth.ts` for sign-up flows)
+- Reference: `tests/e2e/auth.spec.ts`, `tests/e2e/projects.spec.ts`
 
 ### Test Requirements
 

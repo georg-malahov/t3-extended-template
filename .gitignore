@@ -12,6 +12,12 @@ yarn-error.log
 .env.local
 .env*.local
 
+# build artifacts
+*.tsbuildinfo
+
 # local tooling state
 .doppler
 .claude/settings.local.json
+
+# ralphex progress logs
+.ralphex/progress/

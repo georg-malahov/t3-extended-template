@@ -1,50 +1,62 @@
-You are implementing a task in a T3 Extended SaaS template (Next.js 16, ZenStack v3, Better Auth 1.5, TanStack Query 5).
+# task execution prompt — using embedded default with stack-specific additions
+#
+# The embedded default handles plan reading, task selection, implementation,
+# validation, and commit logic via {{PLAN_FILE}} and {{PROGRESS_FILE}} variables.
+# Stack-specific rules below are APPENDED to the embedded logic.
+#
+# available variables:
+#   {{PLAN_FILE}} - path to the plan file being executed
+#   {{PROGRESS_FILE}} - path to the progress log file
+#   {{GOAL}} - human-readable goal description
+#   {{DEFAULT_BRANCH}} - default branch name (main, master, trunk, etc.)
 
-## Stack-Specific Rules
+Read the plan file at {{PLAN_FILE}}. Find the FIRST Task section (### Task N: or ### Iteration N:) that has uncompleted checkboxes ([ ]).
 
-### Schema Changes
-- After ANY change to `zenstack/schema.zmodel`, run `make codegen && make db-push` BEFORE touching frontend code.
-- Generated files land in `src/lib/zenstack/generated/` — NEVER edit these manually.
-- Always define `@@allow` access policies on every new model.
+NOTE: Progress is logged to {{PROGRESS_FILE}} - this file contains detailed execution steps and can be reviewed for debugging.
 
-### Server Components
-Always use this chain for protected pages:
-```tsx
-const session = await requireSession();
-const authContext = sessionToDbAuth(session);
-const authedDb = bindDbAuth(authContext);
-```
-Never access the database without `bindDbAuth()` — bypassing ZenStack bypasses all access policies.
+CRITICAL CONSTRAINT: Complete ONE Task section per iteration.
+A Task section is a "### Task N:" or "### Iteration N:" header with all its checkboxes underneath.
+Complete ALL checkboxes in that section, then STOP.
+Do NOT continue to the next section - the external loop will call you again for it.
 
-### Client Components
-- Use `useClientQueries(schema)` from `@zenstackhq/tanstack-query/react`
-- Import `schema` from `@/lib/zenstack/generated/schema-lite` (NOT `schema.ts`)
-- All queries MUST be scoped by `organizationId` — no unscoped data access ever
+STEP 0 - ANNOUNCE:
+Before starting work, output a brief overview (up to 200 words) explaining:
+- Which task number you picked and its title
+- What the task will accomplish
+- Key files or components involved
+This helps the user understand what's happening in the current iteration.
 
-### Multi-Tenancy
-- Every query must include `where: { organizationId }` — no exceptions.
-- The `auth` schema (Better Auth tables) and `public` schema (app models) are SEPARATE schemas in the same PostgreSQL database. Never cross them.
-- `AUTH_DATABASE_URL` → `auth` schema only. `DATABASE_URL` → `public` schema only.
+STEP 1 - IMPLEMENT:
+- Read the plan's Overview and Context sections to understand the work
+- Implement ALL items in the current Task section (all [ ] checkboxes under it)
+- Write tests for the implementation
 
-### TypeScript
-- Strict mode is enabled: no `any`, no type assertions without a comment justifying why.
-- Prefer ZenStack-generated types from `src/lib/zenstack/generated/models.ts` over manual interfaces.
+STEP 2 - VALIDATE:
+- Run the test and lint commands specified in the plan (e.g., "cargo test", "go test ./...", etc.)
+- For this project use: make lint && make typecheck && make test-unit
+- Fix any failures, repeat until all validation passes
 
-### Testing
-- Unit tests: co-locate as `*.test.ts` next to the file being tested.
-- E2E tests: place in `tests/e2e/*.spec.ts`.
-- Use `Date.now()` suffixes for unique test data in E2E tests.
-- No stub tests — every assertion must check real behavior.
+STEP 3 - COMPLETE (after validation passes):
+- Update progress: edit {{PLAN_FILE}} and change [ ] to [x] for each checkbox you implemented in the current Task section
+- Commit all changes (code + updated plan) with message: feat: <brief task description>
+- Check if any [ ] checkboxes remain in other sections
+- If NO more [ ] checkboxes in the entire plan, output exactly: <<<RALPHEX:ALL_TASKS_DONE>>>
+- If more sections have [ ] checkboxes, STOP HERE - do not continue
 
-### Environment Variables
-- All env vars must be declared in `src/lib/env.ts` with Zod validation.
-- App uses Doppler for env management — never commit `.env` files.
+If any phase fails after reasonable fix attempts, output exactly: <<<RALPHEX:TASK_FAILED>>>
 
-### Makefile Commands
-- `make lint` — ESLint
-- `make typecheck` — TypeScript
-- `make test-unit` — Vitest unit tests
-- `make test-e2e` — Playwright E2E
-- `make codegen` — Regenerate ZenStack artifacts
-- `make db-push` — Sync schema to PostgreSQL
-- `make build` — Production build
+REMINDER: ONE section (Task/Iteration) per loop cycle. After commit, STOP and let the loop handle the next section.
+
+OUTPUT FORMAT: No markdown formatting (no **bold**, `code`, # headers). Plain text and - lists are fine. Do not echo phase names or step numbers - just do the work.
+
+## Stack-Specific Rules for T3 Extended SaaS Template
+
+- After ANY change to zenstack/schema.zmodel, run make codegen && make db-push BEFORE touching frontend
+- Client components: useClientQueries(schema) from @zenstackhq/tanstack-query/react, import schema from @/lib/zenstack/generated/schema-lite (NOT schema.ts)
+- Server components: requireSession() -> sessionToDbAuth() -> bindDbAuth() chain is mandatory
+- Never edit src/lib/zenstack/generated/ — regenerate instead
+- All queries must be scoped by organizationId — no unscoped data access
+- TypeScript strict mode: no any, no type assertions without justification
+- auth schema (Better Auth) and public schema (app models) are SEPARATE — never cross them
+- Unit tests: co-locate as *.test.ts next to the file. E2E tests: tests/e2e/*.spec.ts
+- Use Date.now() suffixes for unique test data in E2E tests

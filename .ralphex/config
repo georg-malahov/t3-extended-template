@@ -1,15 +1,8 @@
-[validate]
-# Run after each task — stop on first failure
-commands = make lint && make typecheck && make test-unit
+# ralphex config for T3 Extended SaaS Template
+# flat key=value format — no INI sections, no inline comments
 
-[git]
-auto_commit = true
-branch_prefix = feat/ralphex-
+# disable codex/external review (no OpenAI key)
+codex_enabled = false
 
-[review]
-# Phase 1: 5 parallel specialized agents (enabled)
-first_review = true
-# Phase 2: External Codex/OpenAI review (disabled)
-second_review = false
-# Phase 3: Final critical-issues pass (enabled)
-final_review = true
+# plans directory
+plans_dir = docs/plans
