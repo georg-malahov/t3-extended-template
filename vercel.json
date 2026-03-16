@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "yarn db:generate && yarn auth:migrate && yarn db:push && yarn build",
+  "installCommand": "yarn install --frozen-lockfile --ignore-engines"
+}

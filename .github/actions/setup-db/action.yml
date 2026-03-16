@@ -1,0 +1,41 @@
+name: Setup Database
+description: >
+  Install deps, generate schema, create auth schema, and prepare database.
+  Requires dopplerhq/cli-action to be installed before calling this action.
+
+inputs:
+  doppler-token:
+    description: Doppler service token for env var injection
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.19.0
+        cache: yarn
+
+    - name: Install dependencies
+      shell: bash
+      run: yarn install --frozen-lockfile --ignore-engines
+
+    - name: Generate schema artifacts
+      shell: bash
+      run: yarn db:generate
+
+    - name: Create auth schema
+      shell: bash
+      run: PGPASSWORD=postgres psql -h localhost -U postgres -d app -c "CREATE SCHEMA IF NOT EXISTS auth;"
+
+    - name: Run auth migrations
+      shell: bash
+      run: doppler run -- yarn auth:migrate
+      env:
+        DOPPLER_TOKEN: ${{ inputs.doppler-token }}
+
+    - name: Push database schema
+      shell: bash
+      run: doppler run -- yarn db:push
+      env:
+        DOPPLER_TOKEN: ${{ inputs.doppler-token }}
