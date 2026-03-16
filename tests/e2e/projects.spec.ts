@@ -78,9 +78,10 @@ test.describe("project CRUD", () => {
   }) => {
     await signUpAndLogin(page);
 
-    const project1 = `First ${Date.now()}`;
-    const project2 = `Second ${Date.now() + 1}`;
-    const project3 = `Third ${Date.now() + 2}`;
+    const ts = Date.now();
+    const project1 = `First ${ts}`;
+    const project2 = `Second ${ts + 1}`;
+    const project3 = `Third ${ts + 2}`;
 
     // Create projects in order
     for (const name of [project1, project2, project3]) {
@@ -156,5 +157,8 @@ test.describe("project CRUD", () => {
 
     // Eventually it should revert back to "Create"
     await expect(page.getByRole("button", { name: "Create" })).toBeVisible({ timeout: 15000 });
+
+    // Verify the project was actually created after the delayed request completed
+    await expect(page.getByText(projectName)).toBeVisible({ timeout: 10000 });
   });
 });
