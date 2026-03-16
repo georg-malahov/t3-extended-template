@@ -45,12 +45,12 @@ Split the monolithic e2e test into focused test files with shared auth helpers. 
 **Files:**
 - Create: `tests/e2e/projects.spec.ts`
 
-- [ ] Test: create project with name and description, verify it appears in the data table
-- [ ] Test: create project with name only (no description), verify "No description" shown
-- [ ] Test: toggle project status ACTIVE -> PAUSED -> ACTIVE, verify status badge updates
-- [ ] Test: delete project and verify it is removed from the table
-- [ ] Test: create multiple projects and verify they all appear in the table ordered by newest first
-- [ ] Run `make test-e2e` - must pass before task 4
+- [x] Test: create project with name and description, verify it appears in the data table
+- [x] Test: create project with name only (no description), verify "No description" shown
+- [x] Test: toggle project status ACTIVE -> PAUSED -> ACTIVE, verify status badge updates
+- [x] Test: delete project and verify it is removed from the table
+- [x] Test: create multiple projects and verify they all appear in the table ordered by newest first
+- [x] Run `make test-e2e` - must pass before task 4
 
 ### Task 4: Add form validation and edge case tests
 
