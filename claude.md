@@ -154,6 +154,57 @@ const form = useForm({ resolver: zodResolver(formSchema) });
 - Unit tests: pure functions, utilities, helpers
 - E2E tests: user flows, CRUD operations, auth flows
 
+## Autonomous Execution (Ralphex)
+
+For multi-task features (3+ steps), use ralphex instead of interactive sessions.
+Each task runs in a fresh Claude Code subprocess — no context drift.
+
+### Workflow
+
+1. `/ralphex-plan [description]` — generates a structured plan in `docs/plans/`
+2. Review the generated plan file
+3. `/ralphex docs/plans/[name].md` — executes plan, auto-commits after each task
+4. **Docker sandboxed (recommended for unattended runs):**
+   `bash .claude/scripts/ralphex-dk.sh docs/plans/[name].md`
+
+### Plan Files
+
+Location: `docs/plans/YYYY-MM-DD-[name].md`
+Format: `### Task N:` sections with `[ ]` checkboxes
+Completed plans move to `docs/plans/completed/` automatically.
+
+### Validation (runs automatically after every task)
+`make lint && make typecheck && make test-unit` (configured in `.ralphex/config`)
+
+### Plan File Format
+
+```markdown
+# Feature: [Name]
+
+## Context
+[Why this feature, what problem it solves]
+
+### Task 1: Schema changes
+- [ ] Add [Model] to zenstack/schema.zmodel with @@allow policies
+- [ ] Run make codegen && make db-push
+
+### Task 2: Backend / server components
+- [ ] Create server component with requireSession() chain
+- [ ] Wire up data fetching via bindDbAuth()
+
+### Task 3: Frontend view component
+- [ ] Create src/components/[entity]/[entity]-view.tsx
+- [ ] Use useClientQueries(schema) scoped by organizationId
+
+### Task 4: Tests
+- [ ] E2E tests in tests/e2e/[entity].spec.ts
+- [ ] Unit tests co-located with utilities
+
+### Task 5: Final E2E verification
+- [ ] Run `make test-e2e` — all browser tests must pass
+- [ ] Run `make test-unit && make typecheck && make lint`
+```
+
 ## Critical Gotchas
 
 1. Better Auth `auth` schema vs ZenStack `public` schema are SEPARATE. Never cross them.

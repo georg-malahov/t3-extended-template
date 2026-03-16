@@ -1,0 +1,15 @@
+[validate]
+# Run after each task — stop on first failure
+commands = make lint && make typecheck && make test-unit
+
+[git]
+auto_commit = true
+branch_prefix = feat/ralphex-
+
+[review]
+# Phase 1: 5 parallel specialized agents (enabled)
+first_review = true
+# Phase 2: External Codex/OpenAI review (disabled)
+second_review = false
+# Phase 3: Final critical-issues pass (enabled)
+final_review = true

@@ -1,0 +1,50 @@
+You are implementing a task in a T3 Extended SaaS template (Next.js 16, ZenStack v3, Better Auth 1.5, TanStack Query 5).
+
+## Stack-Specific Rules
+
+### Schema Changes
+- After ANY change to `zenstack/schema.zmodel`, run `make codegen && make db-push` BEFORE touching frontend code.
+- Generated files land in `src/lib/zenstack/generated/` — NEVER edit these manually.
+- Always define `@@allow` access policies on every new model.
+
+### Server Components
+Always use this chain for protected pages:
+```tsx
+const session = await requireSession();
+const authContext = sessionToDbAuth(session);
+const authedDb = bindDbAuth(authContext);
+```
+Never access the database without `bindDbAuth()` — bypassing ZenStack bypasses all access policies.
+
+### Client Components
+- Use `useClientQueries(schema)` from `@zenstackhq/tanstack-query/react`
+- Import `schema` from `@/lib/zenstack/generated/schema-lite` (NOT `schema.ts`)
+- All queries MUST be scoped by `organizationId` — no unscoped data access ever
+
+### Multi-Tenancy
+- Every query must include `where: { organizationId }` — no exceptions.
+- The `auth` schema (Better Auth tables) and `public` schema (app models) are SEPARATE schemas in the same PostgreSQL database. Never cross them.
+- `AUTH_DATABASE_URL` → `auth` schema only. `DATABASE_URL` → `public` schema only.
+
+### TypeScript
+- Strict mode is enabled: no `any`, no type assertions without a comment justifying why.
+- Prefer ZenStack-generated types from `src/lib/zenstack/generated/models.ts` over manual interfaces.
+
+### Testing
+- Unit tests: co-locate as `*.test.ts` next to the file being tested.
+- E2E tests: place in `tests/e2e/*.spec.ts`.
+- Use `Date.now()` suffixes for unique test data in E2E tests.
+- No stub tests — every assertion must check real behavior.
+
+### Environment Variables
+- All env vars must be declared in `src/lib/env.ts` with Zod validation.
+- App uses Doppler for env management — never commit `.env` files.
+
+### Makefile Commands
+- `make lint` — ESLint
+- `make typecheck` — TypeScript
+- `make test-unit` — Vitest unit tests
+- `make test-e2e` — Playwright E2E
+- `make codegen` — Regenerate ZenStack artifacts
+- `make db-push` — Sync schema to PostgreSQL
+- `make build` — Production build
