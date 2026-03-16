@@ -28,9 +28,13 @@ export const auth = betterAuth({
   trustedOrigins: [
     env.APP_URL,
     env.BETTER_AUTH_URL,
+    // Vercel deployment URLs (deployment-specific, production, branch)
+    env.VERCEL_URL,
+    env.VERCEL_PROJECT_PRODUCTION_URL,
+    env.VERCEL_BRANCH_URL,
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-  ],
+  ].filter((origin): origin is string => Boolean(origin)),
   experimental: {
     joins: true,
   },
