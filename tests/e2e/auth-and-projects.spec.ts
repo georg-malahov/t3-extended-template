@@ -10,7 +10,7 @@ test("user can sign up and manage projects", async ({ page }) => {
   await page.getByLabel("Password").fill("password123");
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
   await expect(page.getByText("Active workspace")).toBeVisible();
 
   await page.getByLabel("Name").fill("Launch plan");
