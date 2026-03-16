@@ -64,6 +64,6 @@ Split the monolithic e2e test into focused test files with shared auth helpers. 
 
 ### Task 5: Verify acceptance criteria
 
-- [ ] Run `make test-e2e` - all browser tests must pass
-- [ ] Run `make test-unit && make typecheck && make lint`
-- [ ] Verify test count increased from 1 to 10+ distinct test cases
+- [x] Run `make test-e2e` - all browser tests must pass
+- [x] Run `make test-unit && make typecheck && make lint`
+- [x] Verify test count increased from 1 to 10+ distinct test cases
