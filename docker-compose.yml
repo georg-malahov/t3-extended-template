@@ -12,6 +12,7 @@ services:
       retries: 20
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./docker-init.sql:/docker-entrypoint-initdb.d/init.sql
 
   app:
     build:
@@ -28,13 +29,11 @@ services:
         condition: service_healthy
     environment:
       APP_URL: ${APP_URL:-http://localhost:3000}
-      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql://postgres:postgres@db:5432/app?options=-c%20search_path%3Dauth}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql://postgres:postgres@db:5432/app?options=-csearch_path%3Dauth}
       AUTH_SECRET: ${AUTH_SECRET:-dev-only-change-me}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000/api/auth}
       CHOKIDAR_USEPOLLING: "true"
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/app}
-      DOPPLER_CONFIG: ${DOPPLER_CONFIG:-dev}
-      DOPPLER_PROJECT: ${DOPPLER_PROJECT:-t3-extended-template}
       NODE_ENV: development
       PLAYWRIGHT_BASE_URL: ${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:3000}
     ports:

@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make *)",
+      "Bash(yarn lint)",
+      "Bash(yarn typecheck)",
+      "Bash(yarn test:unit)",
+      "Bash(yarn test:unit:watch)",
+      "Bash(yarn test:e2e)",
+      "Bash(yarn test:e2e:ui)",
+      "Bash(yarn db:generate)",
+      "Bash(yarn db:push)",
+      "Bash(yarn db:seed)",
+      "Bash(yarn build)",
+      "Bash(yarn dev)",
+      "Bash(npx shadcn@latest *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(mkdir *)",
+      "Bash(tree *)",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(docker compose down -v *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/lint-on-save.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

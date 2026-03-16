@@ -9,3 +9,4 @@ yarn-error.log
 
 # local tooling state
 .doppler
+.claude/settings.local.json
