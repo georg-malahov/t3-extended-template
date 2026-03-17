@@ -180,7 +180,7 @@ Format: `### Task N:` sections with `[ ]` checkboxes
 Completed plans move to `docs/plans/completed/` automatically.
 
 ### Validation (runs automatically after every task)
-`make lint && make typecheck && make test-unit` (configured in `.ralphex/config`)
+`make lint && make typecheck && make test-unit` (configured in `.ralphex/prompts/task.txt`)
 
 ### Plan File Format
 

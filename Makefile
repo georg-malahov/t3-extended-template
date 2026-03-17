@@ -34,7 +34,7 @@ dev-local:
 	$(ENV_RUN) $(YARN) dev
 
 build:
-	$(RUN) sh -c "yarn db:generate && yarn build"
+	$(RUN) $(ENV_RUN) sh -c "yarn db:generate && yarn build"
 
 start:
 	$(YARN) start
