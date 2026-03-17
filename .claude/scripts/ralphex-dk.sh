@@ -1,36 +1,36 @@
 #!/usr/bin/env bash
-# ralphex-dk.sh — Docker wrapper for ralphex
-# Runs ralphex in the base image (Node 24, yarn, make, git included).
-# Uses Claude subscription credentials from ~/.claude (no API key needed).
+# ralphex-dk.sh — Bootstrap wrapper for the official ralphex Docker script.
+# If ralphex-dk is installed locally, delegates to it.
+# Otherwise, downloads the official wrapper to ~/.local/bin/ and runs it.
 #
 # Usage: bash .claude/scripts/ralphex-dk.sh <plan-file> [additional ralphex args...]
+# Docs:  https://ralphex.com/docs/#using-docker
 
 set -euo pipefail
 
-PLAN_FILE="${1:-}"
-if [[ -z "$PLAN_FILE" ]]; then
+OFFICIAL_URL="https://raw.githubusercontent.com/umputun/ralphex/master/scripts/ralphex-dk.sh"
+INSTALL_DIR="${HOME}/.local/bin"
+INSTALL_PATH="${INSTALL_DIR}/ralphex-dk"
+
+if [[ $# -eq 0 ]]; then
   echo "Usage: $0 <plan-file> [ralphex-args...]" >&2
+  echo "Delegates to the official ralphex Docker wrapper (ralphex-dk)." >&2
+  echo "See: https://ralphex.com/docs/#using-docker" >&2
   exit 1
 fi
 
-shift || true
-EXTRA_ARGS=("$@")
+# Find or install the official wrapper
+if command -v ralphex-dk &>/dev/null; then
+  WRAPPER="$(command -v ralphex-dk)"
+elif [[ -x "${INSTALL_PATH}" ]]; then
+  WRAPPER="${INSTALL_PATH}"
+else
+  echo "ralphex-dk not found. Installing official wrapper to ${INSTALL_PATH}..."
+  mkdir -p "${INSTALL_DIR}"
+  curl -fsSL "${OFFICIAL_URL}" -o "${INSTALL_PATH}"
+  chmod +x "${INSTALL_PATH}"
+  echo "Installed ralphex-dk $(${INSTALL_PATH} --version 2>/dev/null || echo '(version unknown)')."
+  WRAPPER="${INSTALL_PATH}"
+fi
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLAUDE_DIR="${HOME}/.claude"
-IMAGE="ghcr.io/umputun/ralphex:latest"
-
-echo "Pulling latest ralphex image..."
-docker pull "${IMAGE}"
-
-echo "Running ralphex in Docker sandbox..."
-echo "  Project: ${PROJECT_DIR}"
-echo "  Plan:    ${PLAN_FILE}"
-
-docker run --rm \
-  -v "${PROJECT_DIR}:/workspace" \
-  -v "${CLAUDE_DIR}:/root/.claude:ro" \
-  -w /workspace \
-  ${ANTHROPIC_API_KEY:+-e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}"} \
-  "${IMAGE}" \
-  ralphex "${PLAN_FILE}" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
+exec "${WRAPPER}" "$@"

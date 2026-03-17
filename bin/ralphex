@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Thin wrapper: runs ralphex natively. All args passed through.
+# Usage: bin/ralphex docs/plans/feature.md -s -p 8080
+# Docs:  https://ralphex.com/docs/#usage
+exec ralphex "$@"

@@ -22,7 +22,7 @@ else
   endif
 endif
 
-.PHONY: install dev dev-local build start lint typecheck test test-unit test-e2e codegen db-push db-seed auth-generate auth-migrate shell
+.PHONY: install dev dev-local build start lint typecheck test test-unit test-e2e codegen db-push db-seed auth-generate auth-migrate shell ralphex-build
 
 install:
 	$(YARN) install
@@ -80,3 +80,7 @@ else
 	@echo "Error: app container is not running. Start it with 'make dev' first."
 	@exit 1
 endif
+
+# Build the custom ralphex Docker image (PostgreSQL + Playwright + full dev toolchain)
+ralphex-build:
+	docker build -t ralphex-t3 -f .claude/docker/Dockerfile.ralphex .

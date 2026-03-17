@@ -1,0 +1,63 @@
+# Custom ralphex image for T3 Extended Template
+# Debian-based with PostgreSQL, Playwright Chromium, and all project deps.
+# Uses multi-stage: copies ralphex + Claude Code from the official Alpine image
+# into a Debian base where Playwright's Chromium works natively.
+#
+# Build:  docker build -t ralphex-t3 -f .claude/docker/Dockerfile.ralphex .
+# Usage:  RALPHEX_IMAGE=ralphex-t3 make ralphex-dk PLAN=docs/plans/xxx.md
+
+# --- Stage 1: extract binaries from official ralphex image ---
+FROM ghcr.io/umputun/ralphex:latest AS ralphex-src
+
+# --- Stage 2: Debian-based image with full dev toolchain ---
+FROM node:24-bookworm-slim
+
+# System deps: git, make, PostgreSQL, su-exec, dbus (for Chromium)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash git make procps curl ca-certificates gnupg lsb-release \
+    postgresql postgresql-client \
+    gosu \
+    && rm -rf /var/lib/apt/lists/*
+
+# Yarn (classic v1)
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
+
+# Playwright Chromium with all system deps (install to shared path)
+RUN PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium \
+    && chmod -R o+rx /opt/pw-browsers
+
+# Copy ralphex binary + Claude Code + init system from the official image
+COPY --from=ralphex-src /srv/ralphex /srv/ralphex
+COPY --from=ralphex-src /usr/local/bin/claude /usr/local/bin/claude
+COPY --from=ralphex-src /usr/local/bin/codex /usr/local/bin/codex
+COPY .claude/docker/entrypoint.sh /init.sh
+RUN chmod +x /init.sh
+
+# Create app user matching the official image's layout
+RUN groupadd -g 999 docker \
+    && groupadd -g 1001 app \
+    && useradd -m -u 1001 -g app -G docker -s /bin/bash app \
+    && mkdir -p /srv /home/app \
+    && chown -R app:app /srv /home/app
+
+# PostgreSQL data directory
+RUN mkdir -p /run/postgresql /var/lib/postgresql/16/data \
+    && chown -R postgres:postgres /run/postgresql /var/lib/postgresql
+
+# Tell Playwright where to find the browser (shared location, not under /root/)
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+
+# App env vars — PostgreSQL runs locally inside the container
+ENV DATABASE_URL="postgresql://postgres@localhost:5432/app"
+ENV AUTH_DATABASE_URL="postgresql://postgres@localhost:5432/app?options=-csearch_path%3Dauth"
+ENV APP_URL="http://localhost:3000"
+ENV AUTH_SECRET="ralphex-sandbox-secret"
+ENV BETTER_AUTH_URL="http://localhost:3000/api/auth"
+
+# Init script: starts PostgreSQL before ralphex launches
+COPY .claude/docker/ralphex-init.sh /srv/init.sh
+RUN chmod +x /srv/init.sh
+
+WORKDIR /workspace
+ENTRYPOINT ["/init.sh"]
+CMD ["/srv/ralphex"]

@@ -75,6 +75,9 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 - `make auth-generate` — Generate Better Auth migration SQL
 - `make auth-migrate` — Run Better Auth schema migrations
 - `make shell` — Interactive bash shell in the running Docker container (for debugging)
+- `bin/ralphex <args>` — Run ralphex natively (all args passed through, see [usage docs](https://ralphex.com/docs/#usage))
+- `bin/ralphex-dk <args>` — Run ralphex in Docker sandbox (same args as native)
+- `make ralphex-build` — Build custom Docker image (`ralphex-t3`) with PostgreSQL + Playwright
 
 ## CRITICAL: After Modifying `schema.zmodel`
 
@@ -165,13 +168,24 @@ const form = useForm({ resolver: zodResolver(formSchema) });
 For multi-task features (3+ steps), use ralphex instead of interactive sessions.
 Each task runs in a fresh Claude Code subprocess — no context drift.
 
+### Installation
+
+- **Native (macOS):** `brew install umputun/apps/ralphex`
+- **Docker wrapper:** auto-installed on first `make ralphex-dk` run, or manually:
+  `curl -sL https://raw.githubusercontent.com/umputun/ralphex/master/scripts/ralphex-dk.sh -o ~/.local/bin/ralphex-dk && chmod +x ~/.local/bin/ralphex-dk`
+- **Custom Docker image (first time):** `make ralphex-build` — builds `ralphex-t3` with PostgreSQL, Playwright Chromium, and full dev toolchain for self-contained E2E testing
+
 ### Workflow
 
 1. `/ralphex-plan [description]` — generates a structured plan in `docs/plans/`
 2. Review the generated plan file
-3. `/ralphex docs/plans/[name].md` — executes plan, auto-commits after each task
-4. **Docker sandboxed (recommended for unattended runs):**
-   `bash .claude/scripts/ralphex-dk.sh docs/plans/[name].md`
+3. **Native:** `bin/ralphex docs/plans/[name].md`
+4. **Docker sandboxed (recommended for unattended runs):** `bin/ralphex-dk docs/plans/[name].md`
+   - Self-contained: PostgreSQL + Playwright Chromium run inside the container
+   - No external database or Docker socket needed
+   - First run requires `make ralphex-build` to build the custom image
+5. **With web dashboard:** `bin/ralphex docs/plans/[name].md -s -p 8080`
+6. All args pass through to ralphex as-is — see [usage docs](https://ralphex.com/docs/#usage)
 
 ### Plan Files
 

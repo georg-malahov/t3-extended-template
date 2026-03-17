@@ -62,3 +62,7 @@ OUTPUT FORMAT: No markdown formatting (no **bold**, `code`, # headers). Plain te
 - auth schema (Better Auth) and public schema (app models) are SEPARATE — never cross them
 - Unit tests: co-locate as *.test.ts next to the file. E2E tests: tests/e2e/*.spec.ts
 - Use Date.now() suffixes for unique test data in E2E tests
+- UI components: ALWAYS use shadcn/ui from src/components/ui/ (Button, Card, DataTable, Input, Label, Sonner, Table, Textarea). If a component is missing, install via npx shadcn@latest add <name> — never hand-roll UI primitives
+- Forms: React Hook Form + zodResolver + shadcn Input/Label/Button. DataTable for listings. No custom form or table markup
+- Every new UI feature MUST have E2E tests that verify it works in a real browser. Capture screenshots with page.screenshot() at key assertion points for visual verification
+- E2E tests must assert visible state (text, element visibility, counts) — not just absence of errors
