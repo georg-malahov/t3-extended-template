@@ -16,7 +16,7 @@ test.describe("project CRUD", () => {
 
     await expect(page.getByText(projectName)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(projectDesc)).toBeVisible();
-    await expect(page.getByText("ACTIVE")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "ACTIVE" })).toBeVisible();
   });
 
   test("create project with name only (no description), verify 'No description' shown", async ({
@@ -44,15 +44,15 @@ test.describe("project CRUD", () => {
     await page.getByRole("button", { name: "Create" }).click();
 
     await expect(page.getByText(projectName)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("ACTIVE")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "ACTIVE" })).toBeVisible();
 
     // ACTIVE -> PAUSED
     await page.getByRole("button", { name: "Pause" }).click();
-    await expect(page.getByText("PAUSED")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("cell", { name: "PAUSED" })).toBeVisible({ timeout: 10000 });
 
     // PAUSED -> ACTIVE
     await page.getByRole("button", { name: "Activate" }).click();
-    await expect(page.getByText("ACTIVE")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("cell", { name: "ACTIVE" })).toBeVisible({ timeout: 10000 });
   });
 
   test("delete project and verify it is removed from the table", async ({
@@ -115,8 +115,7 @@ test.describe("project CRUD", () => {
     await page.getByRole("button", { name: "Create" }).click();
 
     // Validation error should appear under the Name field
-    const nameError = page.locator(".text-destructive").first();
-    await expect(nameError).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/at least 2 character/i)).toBeVisible({ timeout: 5000 });
 
     // No project should be created - empty state should still show
     await expect(page.getByText("Create your first project.")).toBeVisible();
@@ -131,7 +130,7 @@ test.describe("project CRUD", () => {
     await page.getByRole("button", { name: "Create" }).click();
 
     // Validation error should appear for min 2 chars
-    await expect(page.locator(".text-destructive")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/at least 2 character/i)).toBeVisible({ timeout: 5000 });
   });
 
   test("create button shows 'Creating...' loading state during submission", async ({

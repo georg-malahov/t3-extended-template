@@ -60,6 +60,8 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 
 ## Makefile (Primary Interface)
 
+**Docker auto-detection:** When `make dev` is running, all commands below automatically execute inside the Docker `app` container via `docker compose exec`. When no container is running, they fall back to local execution.
+
 - `make dev` — Docker-based dev (recommended)
 - `make dev-local` — Native Node.js dev
 - `make codegen` — Regenerate ZenStack artifacts (**ALWAYS** after schema.zmodel changes)
@@ -68,8 +70,11 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 - `make typecheck` — TypeScript type checking
 - `make build` — Production build
 - `make test-unit` — Vitest unit tests
-- `make test-e2e` — Playwright E2E tests
+- `make test-e2e` — Playwright E2E tests (headless Chromium in Docker, requires `make dev` running)
 - `make db-seed` — Seed sample data
+- `make auth-generate` — Generate Better Auth migration SQL
+- `make auth-migrate` — Run Better Auth schema migrations
+- `make shell` — Interactive bash shell in the running Docker container (for debugging)
 
 ## CRITICAL: After Modifying `schema.zmodel`
 

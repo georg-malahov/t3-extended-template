@@ -14,6 +14,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { ProjectGetPayload } from "@/lib/zenstack/generated/input";
 import { schema } from "@/lib/zenstack/generated/schema-lite";
 
 const projectSchema = z.object({
@@ -23,17 +24,7 @@ const projectSchema = z.object({
 
 type ProjectValues = z.infer<typeof projectSchema>;
 
-type ProjectRow = {
-  id: string;
-  name: string;
-  description: string | null;
-  status: "ACTIVE" | "PAUSED" | "ARCHIVED";
-  creator?: {
-    name?: string | null;
-    email: string;
-  } | null;
-  updatedAt: string | Date;
-};
+type ProjectRow = ProjectGetPayload<{ include: { creator: true } }>;
 
 export function ProjectsView({
   organizationId,
@@ -218,7 +209,7 @@ export function ProjectsView({
         <CardContent>
           <DataTable
             columns={columns}
-            data={(projectsQuery.data ?? []) as ProjectRow[]}
+            data={projectsQuery.data ?? []}
             emptyMessage={
               projectsQuery.isPending ? "Loading projects..." : "Create your first project."
             }
