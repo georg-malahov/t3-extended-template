@@ -9,7 +9,7 @@ test.describe("auth flows", () => {
 
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByText("Active workspace")).toBeVisible();
-    await expect(page.getByText(name)).toBeVisible();
+    await expect(page.getByRole("heading", { name: `${name}'s Workspace` })).toBeVisible();
   });
 
   test("sign-in with existing credentials reaches dashboard", async ({

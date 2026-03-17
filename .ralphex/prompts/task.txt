@@ -34,6 +34,8 @@ STEP 1 - IMPLEMENT:
 STEP 2 - VALIDATE:
 - Run the test and lint commands specified in the plan (e.g., "cargo test", "go test ./...", etc.)
 - For this project use: make lint && make typecheck && make test-unit
+- All make commands auto-detect whether the Docker app container is running and exec inside it if so
+- When the app is running in Docker (make dev), make test-e2e is also available for E2E validation
 - Fix any failures, repeat until all validation passes
 
 STEP 3 - COMPLETE (after validation passes):
