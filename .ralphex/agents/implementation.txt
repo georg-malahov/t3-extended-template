@@ -22,6 +22,19 @@ Verify that the implementation matches the task description and follows all requ
 - New API routes must validate session before any DB operation.
 - Redirects on unauthenticated access should go to `/sign-in`.
 
+## UI Component Reuse (shadcn/ui)
+- All UI must use existing shadcn/ui components from `src/components/ui/` — do NOT create custom components when a shadcn/ui primitive exists.
+- Available components: Button, Card, DataTable, Input, Label, Sonner (toast), Table, Textarea. If a needed component is missing, install it via `npx shadcn@latest add <component>` — never hand-roll dialogs, dropdowns, selects, etc.
+- Forms must use React Hook Form + zodResolver with shadcn Label, Input, Button — no custom form primitives.
+- Data listings must use DataTable from `@/components/ui/data-table` — no custom table markup.
+- Flag any custom component that reimplements functionality already provided by shadcn/ui or Radix UI.
+
+## Browser Verification
+- Every new page or UI feature must be verified in a real browser via Playwright.
+- If E2E tests exist for the feature, running `make test-e2e` counts as browser verification.
+- If no E2E tests cover the new UI, flag it — the feature is incomplete without browser-level validation.
+- Screenshots should be captured for visual verification of new UI (Playwright `page.screenshot()`).
+
 ## Task Completeness
 - Compare the implementation against the task's checklist items.
 - Flag any unchecked items that appear unimplemented.

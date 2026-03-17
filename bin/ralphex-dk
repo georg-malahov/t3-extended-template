@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Thin wrapper: runs ralphex in Docker sandbox (custom image with PostgreSQL + Playwright).
+# All args passed through. Requires: make ralphex-build (first time only).
+# Usage: bin/ralphex-dk docs/plans/feature.md -s -p 8080
+# Docs:  https://ralphex.com/docs/#usage
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! docker image inspect ralphex-t3 >/dev/null 2>&1; then
+  echo "Image ralphex-t3 not found. Run 'make ralphex-build' first." >&2
+  exit 1
+fi
+
+RALPHEX_IMAGE=ralphex-t3 exec bash "${SCRIPT_DIR}/.claude/scripts/ralphex-dk.sh" "$@"

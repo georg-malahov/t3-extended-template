@@ -13,6 +13,9 @@ Review test files created or modified in this task.
 - Each test must use unique data: append `Date.now()` or a random suffix to names/emails.
 - Tests must follow full user-flow style: sign up → navigate → perform action → assert.
 - Reference pattern: `tests/e2e/auth-and-projects.spec.ts`.
+- Every new UI feature MUST have E2E test coverage — unit tests alone are insufficient for UI.
+- E2E tests should capture screenshots at key points using `await page.screenshot({ path: ... })` for visual verification.
+- Tests must assert visible UI state (text content, element visibility, counts) — not just absence of errors.
 
 ## Coverage Checks
 - Every new entity with CRUD operations needs an E2E test covering:

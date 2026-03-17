@@ -27,6 +27,16 @@ Review the changes for the following issues. Be specific: cite file paths and li
 - No unsafe type assertions (`as SomeType`) without a comment explaining why it's safe.
 - Flag missing or incorrect return types on exported async functions.
 
+## UI Component Discipline
+- All UI must use shadcn/ui components from `src/components/ui/`. Custom components that duplicate shadcn/ui functionality are a quality issue.
+- Available: Button, Card, DataTable, Input, Label, Sonner, Table, Textarea. Missing components should be installed via `npx shadcn@latest add <name>`.
+- Flag custom dialogs, modals, dropdowns, selects, tabs, or form controls when shadcn/ui equivalents exist.
+- Flag inline styles or custom CSS for layout/styling that Tailwind CSS classes can handle.
+
+## Visual Verification
+- New UI features must have either E2E test coverage or documented visual verification via Playwright screenshots.
+- Flag features that only have unit tests but no browser-level validation — the UI may render but could be broken visually.
+
 ## Summary Format
 For each issue found, output:
 - **Severity**: Critical / High / Medium / Low
