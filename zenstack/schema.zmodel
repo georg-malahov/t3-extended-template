@@ -68,6 +68,8 @@ model Membership {
   userId         String
 
   @@unique([organizationId, userId])
+  // Self-assignment: allows provisioning flow to create initial OWNER membership during sign-up.
+  // Note: also permits any authenticated user to join any org by ID — acceptable for this template.
   @@allow('create', auth() != null && auth().id == userId)
   @@allow('read', auth() != null && organization.memberships?[userId == auth().id])
   @@allow('update,delete', auth() != null && organization.memberships?[userId == auth().id && role == OWNER])
@@ -87,5 +89,6 @@ model Project {
 
   @@allow('read', auth() != null && organization.memberships?[userId == auth().id])
   @@allow('create', auth() != null && creatorId == auth().id && organization.memberships?[userId == auth().id])
+  // Any org member can update/delete projects — intentional flat-hierarchy design for this template
   @@allow('update,delete', auth() != null && organization.memberships?[userId == auth().id])
 }

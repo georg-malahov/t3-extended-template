@@ -17,10 +17,14 @@ services:
   app:
     build:
       context: .
-      target: deps
+      target: dev
+    # yarn install: needed because bind mount overlays the image's /app
+    # auth schema DDL: docker-init.sql only runs on first volume creation;
+    # this ensures the schema exists on subsequent starts too
     command: >
       sh -lc "yarn install --frozen-lockfile &&
       yarn db:generate &&
+      node -e \"const {Client}=require('pg');const c=new Client(process.env.DATABASE_URL);c.connect().then(()=>c.query('CREATE SCHEMA IF NOT EXISTS auth')).then(()=>c.end())\" &&
       yarn auth:migrate &&
       yarn db:push &&
       yarn dev --hostname 0.0.0.0 --port 3000"
@@ -36,7 +40,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:-dev-only-change-me}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000/api/auth}
       NODE_ENV: ${NODE_ENV:-development}
-      PLAYWRIGHT_BASE_URL: ${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:3000}
+      PLAYWRIGHT_BASE_URL: ${PLAYWRIGHT_BASE_URL:-http://localhost:3000}
       CHOKIDAR_USEPOLLING: "true"
     ports:
       - "3000:3000"

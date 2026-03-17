@@ -9,48 +9,46 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: app
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d app"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Install Doppler CLI
-        uses: dopplerhq/cli-action@v3
+      - name: Build and start containers
+        run: docker compose up -d --build
 
-      - name: Setup database
-        uses: ./.github/actions/setup-db
-        with:
-          doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+      - name: Wait for app to be ready
+        run: |
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null | grep -q "200"; then
+              echo "App is ready"
+              exit 0
+            fi
+            echo "Waiting for app... ($i/60)"
+            sleep 5
+          done
+          echo "App failed to start"
+          docker compose logs app
+          exit 1
 
       - name: Lint
-        run: doppler run -- yarn lint
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: make lint
 
       - name: Typecheck
-        run: doppler run -- yarn typecheck
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: make typecheck
 
       - name: Unit tests
-        run: doppler run -- yarn test:unit
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: make test-unit
 
-      - name: Production build
-        run: doppler run -- yarn build
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      - name: E2E tests
+        run: make test-e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+
+      - name: Container logs (on failure)
+        if: failure()
+        run: docker compose logs app

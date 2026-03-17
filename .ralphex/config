@@ -1,0 +1,8 @@
+# ralphex config for T3 Extended SaaS Template
+# flat key=value format — no INI sections, no inline comments
+
+# disable codex/external review (no OpenAI key)
+codex_enabled = false
+
+# plans directory
+plans_dir = docs/plans

@@ -13,6 +13,7 @@
       "Bash(yarn db:seed)",
       "Bash(yarn build)",
       "Bash(yarn dev)",
+      "Bash(yarn add *)",
       "Bash(npx shadcn@latest *)",
       "Bash(git status *)",
       "Bash(git diff *)",
@@ -26,6 +27,9 @@
       "Bash(wc *)",
       "Bash(mkdir *)",
       "Bash(tree *)",
+      "Bash(ralphex *)",
+      "Bash(bash .claude/scripts/ralphex-dk.sh *)",
+      "Bash(docker pull ghcr.io/umputun/ralphex:latest)",
       "Read",
       "Edit",
       "Write",
@@ -49,5 +53,8 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "ralphex@ralphex": true
   }
 }
