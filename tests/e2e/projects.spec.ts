@@ -115,7 +115,7 @@ test.describe("project CRUD", () => {
     await page.getByRole("button", { name: "Create" }).click();
 
     // Validation error should appear under the Name field
-    await expect(page.getByText(/at least 2 character/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/>=2 characters/i)).toBeVisible({ timeout: 5000 });
 
     // No project should be created - empty state should still show
     await expect(page.getByText("Create your first project.")).toBeVisible();
@@ -130,7 +130,7 @@ test.describe("project CRUD", () => {
     await page.getByRole("button", { name: "Create" }).click();
 
     // Validation error should appear for min 2 chars
-    await expect(page.getByText(/at least 2 character/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/>=2 characters/i)).toBeVisible({ timeout: 5000 });
   });
 
   test("create button shows 'Creating...' loading state during submission", async ({
