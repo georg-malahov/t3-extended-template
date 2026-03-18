@@ -1,3 +1,4 @@
+# check=skip=SecretsUsedInArgOrEnv
 # Custom ralphex image for T3 Extended Template
 # Debian-based with PostgreSQL, Playwright Chromium, and all project deps.
 # Uses multi-stage: copies ralphex + Claude Code from the official Alpine image
@@ -30,8 +31,21 @@ RUN PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps
 COPY --from=ralphex-src /srv/ralphex /srv/ralphex
 COPY --from=ralphex-src /usr/local/bin/claude /usr/local/bin/claude
 COPY --from=ralphex-src /usr/local/bin/codex /usr/local/bin/codex
-COPY .claude/docker/entrypoint.sh /init.sh
-RUN chmod +x /init.sh
+
+# Use official entrypoint, patched for Debian:
+#   - dinit shebang → bash (dinit is Alpine-only)
+#   - su-exec → gosu (Alpine vs Debian equivalent)
+#   - sed -i → sed -i'' (Alpine sed vs GNU sed compatibility already fine)
+COPY --from=ralphex-src /init.sh /init.sh
+RUN sed -i '1s|.*|#!/bin/bash|' /init.sh \
+    && sed -i 's/su-exec/gosu/g' /init.sh \
+    && sed -i 's/addgroup -g/addgroup --gid/g' /init.sh \
+    && sed -i 's/addgroup app/adduser app/g' /init.sh \
+    && sed -i 's/delgroup docker/groupdel docker/g' /init.sh \
+    && chmod +x /init.sh
+
+# Use official init script (handles Claude credentials, codex, etc.)
+COPY --from=ralphex-src /srv/init.sh /srv/init.sh
 
 # Create app user matching the official image's layout
 RUN groupadd -g 999 docker \
@@ -47,16 +61,37 @@ RUN mkdir -p /run/postgresql /var/lib/postgresql/16/data \
 # Tell Playwright where to find the browser (shared location, not under /root/)
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 
-# App env vars — PostgreSQL runs locally inside the container
+# Match official ralphex image defaults (required by /init.sh)
+ENV TERM=xterm-color
+ENV TIME_ZONE=Europe/Berlin
+ENV APP_USER=app
+ENV APP_UID=1001
+ENV DOCKER_GID=999
+ENV USE_BUILTIN_RIPGREP=0
+ENV RALPHEX_DOCKER=1
+
+# App env vars — sandbox defaults for local PostgreSQL inside container.
+# These are NOT production secrets — they only apply to the ephemeral
+# in-container PostgreSQL instance. SecretsUsedInArgOrEnv check is disabled above.
 ENV DATABASE_URL="postgresql://postgres@localhost:5432/app"
 ENV AUTH_DATABASE_URL="postgresql://postgres@localhost:5432/app?options=-csearch_path%3Dauth"
 ENV APP_URL="http://localhost:3000"
-ENV AUTH_SECRET="ralphex-sandbox-secret"
+ENV AUTH_SECRET="tZWssbPUE8cxF7JwsLxKuiE8lBaWC/eFEB9AUKzEUzA="
 ENV BETTER_AUTH_URL="http://localhost:3000/api/auth"
 
-# Init script: starts PostgreSQL before ralphex launches
-COPY .claude/docker/ralphex-init.sh /srv/init.sh
-RUN chmod +x /srv/init.sh
+# Pre-install node_modules (rebuild image on package changes: make ralphex-build)
+# Install at /workspace so .bin symlinks resolve correctly at runtime
+COPY package.json yarn.lock /workspace/
+RUN cd /workspace && yarn install --frozen-lockfile \
+    && mv /workspace/node_modules /prebuilt_node_modules \
+    && rm -f /workspace/package.json /workspace/yarn.lock \
+    && chown -R app:app /prebuilt_node_modules
+
+# Append custom init steps to the official init script
+COPY .claude/docker/pg-init.sh /srv/pg-init.sh
+COPY .claude/docker/app-init.sh /srv/app-init.sh
+RUN chmod +x /srv/pg-init.sh /srv/app-init.sh /srv/init.sh \
+    && printf '\n# --- T3 extension ---\n/srv/pg-init.sh\n/srv/app-init.sh\n' >> /srv/init.sh
 
 WORKDIR /workspace
 ENTRYPOINT ["/init.sh"]

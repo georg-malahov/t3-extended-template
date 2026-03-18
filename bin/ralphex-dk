@@ -13,4 +13,10 @@ if ! docker image inspect ralphex-t3 >/dev/null 2>&1; then
   exit 1
 fi
 
-RALPHEX_IMAGE=ralphex-t3 exec bash "${SCRIPT_DIR}/.claude/scripts/ralphex-dk.sh" "$@"
+# Mount a named volume over node_modules so prebuilt (Linux) modules don't
+# overwrite host (macOS) node_modules through the workspace bind mount.
+# The init script populates this volume from /prebuilt_node_modules on each run.
+export RALPHEX_EXTRA_VOLUMES="${RALPHEX_EXTRA_VOLUMES:+${RALPHEX_EXTRA_VOLUMES},}ralphex-t3-nm:/workspace/node_modules"
+export RALPHEX_IMAGE=ralphex-t3
+
+exec bash "${SCRIPT_DIR}/.claude/scripts/ralphex-dk.sh" "$@"

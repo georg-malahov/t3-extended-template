@@ -1,6 +1,6 @@
 #!/bin/bash
-# ralphex-init.sh — starts PostgreSQL inside the ralphex container.
-# Called by the entrypoint (/init.sh) before ralphex launches.
+# pg-init.sh — starts PostgreSQL inside the ralphex container.
+# Appended to the official /srv/init.sh by Dockerfile.ralphex.
 # Runs as root; the entrypoint drops to 'app' user for the main command.
 
 set -e
@@ -14,7 +14,7 @@ PG_DATA="/var/lib/postgresql/${PG_VERSION}/data"
 mkdir -p "${PG_DATA}" /run/postgresql
 chown -R postgres:postgres "${PG_DATA}" /run/postgresql
 
-echo "[ralphex-init] starting PostgreSQL ${PG_VERSION}..."
+echo "[pg-init] starting PostgreSQL ${PG_VERSION}..."
 
 # Initialize database cluster if needed
 if [ ! -f "${PG_DATA}/PG_VERSION" ]; then
@@ -36,4 +36,4 @@ done
 gosu postgres createdb "${PG_DB}" 2>/dev/null || true
 gosu postgres psql -d "${PG_DB}" -c "CREATE SCHEMA IF NOT EXISTS auth;" 2>/dev/null
 
-echo "[ralphex-init] PostgreSQL ready (database: ${PG_DB}, auth schema created)"
+echo "[pg-init] PostgreSQL ready (database: ${PG_DB}, auth schema created)"
