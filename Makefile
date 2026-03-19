@@ -1,7 +1,11 @@
 SHELL := /bin/bash
 
-DOCKER_COMPOSE ?= docker compose
 YARN ?= yarn
+
+# Derive a unique Compose project name from the directory basename.
+# Worktrees get different names → isolated containers, volumes, and networks.
+COMPOSE_PROJECT := $(shell basename "$(CURDIR)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/-/g')
+DOCKER_COMPOSE ?= COMPOSE_PROJECT_NAME=$(COMPOSE_PROJECT) docker compose
 
 # Auto-detect: if the 'app' container is running, exec commands inside it
 DOCKER_APP_RUNNING := $(shell $(DOCKER_COMPOSE) ps --status running --format '{{.Service}}' 2>/dev/null | grep -q '^app$$' && echo 1)
@@ -28,7 +32,18 @@ install:
 	$(YARN) install
 
 dev:
-	$(DOCKER_COMPOSE) up --build
+	@port="$${PORT:-}"; \
+	if [ -z "$$port" ]; then \
+	  port=$$(grep '^APP_PORT=' .env.local 2>/dev/null | cut -d= -f2); \
+	fi; \
+	if [ -z "$$port" ]; then \
+	  port=$$(python3 -c "import socket; s=socket.socket(); s.bind(('',0)); print(s.getsockname()[1]); s.close()"); \
+	  echo "APP_PORT=$$port" >> .env.local; \
+	  echo "Auto-assigned APP_PORT=$$port"; \
+	fi; \
+	url="http://localhost:$$port"; \
+	( until curl -sf "$$url" >/dev/null 2>&1; do sleep 2; done; open "$$url" ) & \
+	APP_PORT=$$port $(DOCKER_COMPOSE) up --build
 
 dev-local:
 	$(ENV_RUN) $(YARN) dev
