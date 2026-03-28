@@ -65,7 +65,7 @@ OUTPUT FORMAT: No markdown formatting (no **bold**, `code`, # headers). Plain te
 ## Stack-Specific Rules for T3 Extended SaaS Template
 
 - node_modules are prebuilt in the Docker image. If you see module-not-found or resolution errors (e.g. after package.json changes), run: yarn install --frozen-lockfile
-- After ANY change to zenstack/schema.zmodel, run make codegen && make db-migrate BEFORE touching frontend
+- After ANY change to zenstack/schema.zmodel, run yarn db:generate && yarn db:migrate BEFORE touching frontend
 - Client components: useClientQueries(schema) from @zenstackhq/tanstack-query/react, import schema from @/lib/zenstack/generated/schema-lite (NOT schema.ts)
 - Server components: requireSession() -> sessionToDbAuth() -> bindDbAuth() chain is mandatory
 - Never edit src/lib/zenstack/generated/ — regenerate instead

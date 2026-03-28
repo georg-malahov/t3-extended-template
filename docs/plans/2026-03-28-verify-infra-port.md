@@ -48,15 +48,15 @@ The port was done as a batch operation. This plan verifies everything is correct
 
 ### Task 3: Validate ralphex and Claude tooling consistency
 
-- [ ] Verify `.ralphex/config` has all expected keys (codex_enabled, plans_dir, finalize_enabled, wait_on_limit, claude_limit_patterns)
-- [ ] Verify all `.ralphex/agents/*.txt` files have model frontmatter headers
-- [ ] Verify `.ralphex/prompts/task.txt` references correct validation command (`yarn lint && yarn typecheck && yarn test:unit`)
-- [ ] Verify `.ralphex/prompts/task.txt` does NOT reference `make` commands (they fail inside ralphex-dk)
-- [ ] Verify `.claude/settings.json` has all required permissions (make, yarn, git, docker, gh, etc.)
-- [ ] Verify `.claude/hooks/lint-on-save.sh` and `docs-reminder.sh` are executable and have correct shebang
-- [ ] Verify `.claude/commands/` has all expected commands: `ralphex.md`, `ralphex-plan.md`, `ralphex-update.md`, `create-pr.md`, `orchestrate.md`
-- [ ] Verify `.claude/skills/generate-docs/SKILL.md` scopes match template models (no fall, email, etc.)
-- [ ] Verify `bin/ralphex` and `bin/ralphex-dk` are executable
+- [x] Verify `.ralphex/config` has all expected keys (codex_enabled, plans_dir, finalize_enabled, wait_on_limit, claude_limit_patterns)
+- [x] Verify all `.ralphex/agents/*.txt` files have model frontmatter headers
+- [x] Verify `.ralphex/prompts/task.txt` references correct validation command (`yarn lint && yarn typecheck && yarn test:unit`)
+- [x] Verify `.ralphex/prompts/task.txt` does NOT reference `make` commands (they fail inside ralphex-dk)
+- [x] Verify `.claude/settings.json` has all required permissions (make, yarn, git, docker, gh, etc.)
+- [x] Verify `.claude/hooks/lint-on-save.sh` and `docs-reminder.sh` are executable and have correct shebang
+- [x] Verify `.claude/commands/` has all expected commands: `ralphex.md`, `ralphex-plan.md`, `ralphex-update.md`, `create-pr.md`, `orchestrate.md`
+- [x] Verify `.claude/skills/generate-docs/SKILL.md` scopes match template models (no fall, email, etc.)
+- [x] Verify `bin/ralphex` and `bin/ralphex-dk` are executable
 
 ### Task 4: Validate Docker and CI infrastructure
 
