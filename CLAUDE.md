@@ -92,7 +92,7 @@ Living Mermaid-in-Markdown diagrams generated from the codebase. Renders nativel
 
 **Regeneration:**
 - Run `/generate-docs` to regenerate all diagrams, or `/generate-docs erd` for a specific one
-- A PostToolUse hook (in `.claude/settings.local.json`) reminds to regenerate when editing `schema.zmodel`, `src/app/` routes/pages, or `src/lib/` modules
+- A PostToolUse hook (in `.claude/settings.json`) reminds to regenerate when editing `schema.zmodel`, `src/app/` routes/pages, or `src/lib/` modules
 
 ## Data Model (`zenstack/schema.zmodel`)
 
@@ -334,7 +334,7 @@ All vars are in Doppler. The canonical schema is in `src/lib/env.ts`.
 | `NODE_ENV` | yes | `development` / `test` / `production` |
 | `APP_URL` | yes | App base URL (e.g. `http://localhost:3000`) |
 | `DATABASE_URL` | yes | PostgreSQL connection string |
-| `AUTH_SECRET` | yes | Secret for Better Auth session signing |
+| `AUTH_DATABASE_URL` | no | Auto-derived from DATABASE_URL with auth schema search_path || `AUTH_SECRET` | yes | Secret for Better Auth session signing |
 | `BETTER_AUTH_URL` | yes | Better Auth base URL |
 | `PLAYWRIGHT_BASE_URL` | no | Base URL for E2E tests |
 | `MINIO_ENDPOINT` | no | MinIO/S3 endpoint URL (e.g. `http://localhost:9000`) |

@@ -82,6 +82,15 @@
             "command": ".claude/hooks/lint-on-save.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/docs-reminder.sh"
+          }
+        ]
       }
     ]
   },
