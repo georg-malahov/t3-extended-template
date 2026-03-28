@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Thin wrapper: runs ralphex in Docker sandbox (custom image with PostgreSQL + Playwright).
+# Thin wrapper: runs ralphex in Docker sandbox (custom image with PostgreSQL, MinIO,
+# Doppler CLI, GitHub CLI, and Playwright Chromium).
 # All args passed through. Requires: make ralphex-build (first time only).
 # Usage: bin/ralphex-dk docs/plans/feature.md -s -p 8080
 # Docs:  https://ralphex.com/docs/#usage
@@ -13,10 +14,23 @@ if ! docker image inspect ralphex-t3 >/dev/null 2>&1; then
   exit 1
 fi
 
-# Mount a named volume over node_modules so prebuilt (Linux) modules don't
-# overwrite host (macOS) node_modules through the workspace bind mount.
+# Mount a per-worktree named volume over node_modules so prebuilt (Linux) modules
+# don't overwrite host (macOS) node_modules through the workspace bind mount.
 # The init script populates this volume from /prebuilt_node_modules on each run.
-export RALPHEX_EXTRA_VOLUMES="${RALPHEX_EXTRA_VOLUMES:+${RALPHEX_EXTRA_VOLUMES},}ralphex-t3-nm:/workspace/node_modules"
+# Using a per-worktree name (matching `make dev` convention) avoids conflicts when
+# multiple worktrees run ralphex-dk simultaneously.
+NM_VOLUME="t3app-$(basename "$SCRIPT_DIR" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/-/g')-nm"
+export RALPHEX_EXTRA_VOLUMES="${RALPHEX_EXTRA_VOLUMES:+${RALPHEX_EXTRA_VOLUMES},}${NM_VOLUME}:/workspace/node_modules"
 export RALPHEX_IMAGE=ralphex-t3
+
+# Pass secrets tokens into the container (if set in host environment).
+# DOPPLER_TOKEN: enables Doppler secrets management inside container.
+# GH_TOKEN: enables GitHub CLI for PR creation inside container.
+if [ -n "${DOPPLER_TOKEN:-}" ]; then
+  export RALPHEX_EXTRA_ENVS="${RALPHEX_EXTRA_ENVS:+${RALPHEX_EXTRA_ENVS},}DOPPLER_TOKEN"
+fi
+if [ -n "${GH_TOKEN:-}" ]; then
+  export RALPHEX_EXTRA_ENVS="${RALPHEX_EXTRA_ENVS:+${RALPHEX_EXTRA_ENVS},}GH_TOKEN"
+fi
 
 exec bash "${SCRIPT_DIR}/.claude/scripts/ralphex-dk.sh" "$@"

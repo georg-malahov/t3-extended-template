@@ -1,6 +1,7 @@
 # check=skip=SecretsUsedInArgOrEnv
 # Custom ralphex image for T3 Extended Template
-# Debian-based with PostgreSQL, Playwright Chromium, and all project deps.
+# Debian-based with PostgreSQL, MinIO (S3), Doppler CLI, GitHub CLI,
+# Playwright Chromium, and all project deps.
 # Uses multi-stage: copies ralphex + Claude Code from the official Alpine image
 # into a Debian base where Playwright's Chromium works natively.
 #
@@ -20,6 +21,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gosu \
     && rm -rf /var/lib/apt/lists/*
 
+# Doppler CLI (secrets management — token passed at runtime, NOT baked in)
+RUN curl -sLf --retry 3 --tlsv1.2 --proto "=https" \
+      'https://cli.doppler.com/install.sh' | sh
+
+# MinIO server binary (S3-compatible storage for attachments)
+RUN curl -fsSL https://dl.min.io/server/minio/release/linux-$(dpkg --print-architecture)/minio -o /usr/local/bin/minio \
+    && chmod +x /usr/local/bin/minio \
+    && mkdir -p /data/minio
+
+# MinIO client (mc) for bucket creation
+RUN curl -fsSL https://dl.min.io/client/mc/release/linux-$(dpkg --print-architecture)/mc -o /usr/local/bin/mc \
+    && chmod +x /usr/local/bin/mc
+
+# GitHub CLI (PR creation — GH_TOKEN passed at runtime, NOT baked in)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+      > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update && apt-get install -y --no-install-recommends gh \
+    && rm -rf /var/lib/apt/lists/*
+
 # Yarn (classic v1)
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
@@ -35,7 +57,6 @@ COPY --from=ralphex-src /usr/local/bin/codex /usr/local/bin/codex
 # Use official entrypoint, patched for Debian:
 #   - dinit shebang → bash (dinit is Alpine-only)
 #   - su-exec → gosu (Alpine vs Debian equivalent)
-#   - sed -i → sed -i'' (Alpine sed vs GNU sed compatibility already fine)
 COPY --from=ralphex-src /init.sh /init.sh
 RUN sed -i '1s|.*|#!/bin/bash|' /init.sh \
     && sed -i 's/su-exec/gosu/g' /init.sh \
@@ -73,11 +94,29 @@ ENV RALPHEX_DOCKER=1
 # App env vars — sandbox defaults for local PostgreSQL inside container.
 # These are NOT production secrets — they only apply to the ephemeral
 # in-container PostgreSQL instance. SecretsUsedInArgOrEnv check is disabled above.
+ENV NODE_ENV="development"
 ENV DATABASE_URL="postgresql://postgres@localhost:5432/app"
 ENV AUTH_DATABASE_URL="postgresql://postgres@localhost:5432/app?options=-csearch_path%3Dauth"
 ENV APP_URL="http://localhost:3000"
 ENV AUTH_SECRET="tZWssbPUE8cxF7JwsLxKuiE8lBaWC/eFEB9AUKzEUzA="
 ENV BETTER_AUTH_URL="http://localhost:3000/api/auth"
+
+# MinIO env vars — defaults for in-container MinIO instance
+ENV MINIO_ENDPOINT="http://localhost:9000"
+ENV MINIO_ACCESS_KEY="minioadmin"
+ENV MINIO_SECRET_KEY="minioadmin"
+ENV MINIO_BUCKET="app-storage"
+
+# Playwright / test infra
+ENV PLAYWRIGHT_BASE_URL="http://localhost:3000"
+
+# Test user defaults
+ENV TEST_USER_EMAIL="testuser@localhost"
+ENV TEST_USER_PASSWORD="testpassword"
+ENV TEST_USER_NAME="Test User"
+
+# Ensure node_modules/.bin is in PATH for all processes (docker exec, yarn scripts, etc.)
+ENV PATH=/workspace/node_modules/.bin:$PATH
 
 # Pre-install node_modules (rebuild image on package changes: make ralphex-build)
 # Install at /workspace so .bin symlinks resolve correctly at runtime
@@ -90,8 +129,19 @@ RUN cd /workspace && yarn install --frozen-lockfile \
 # Append custom init steps to the official init script
 COPY .claude/docker/pg-init.sh /srv/pg-init.sh
 COPY .claude/docker/app-init.sh /srv/app-init.sh
-RUN chmod +x /srv/pg-init.sh /srv/app-init.sh /srv/init.sh \
-    && printf '\n# --- T3 extension ---\n/srv/pg-init.sh\n/srv/app-init.sh\n' >> /srv/init.sh
+COPY .claude/docker/doppler-init.sh /srv/doppler-init.sh
+COPY .claude/docker/minio-init.sh /srv/minio-init.sh
+COPY .claude/docker/env-init.sh /srv/env-init.sh
+RUN chmod +x /srv/pg-init.sh /srv/app-init.sh /srv/doppler-init.sh /srv/minio-init.sh /srv/env-init.sh /srv/init.sh \
+    && printf '\n# --- T3 extension ---\n/srv/pg-init.sh\n/srv/minio-init.sh\n/srv/doppler-init.sh\n/srv/app-init.sh\n' >> /srv/init.sh
+
+# Inject Doppler env loading into /init.sh before the exec line.
+# /init.sh runs init scripts as subprocesses, so env vars set in doppler-init.sh
+# don't propagate to the exec'd app process. This sources env-init.sh (which
+# loads /srv/doppler-env.sh created by doppler-init.sh) in the main shell,
+# ensuring Doppler secrets override Dockerfile ENV defaults for the app.
+RUN sed -i '/exec.*gosu/i . /srv/env-init.sh' /init.sh \
+    && if ! grep -q 'env-init.sh' /init.sh; then echo "ERROR: env-init.sh injection into /init.sh failed"; exit 1; fi
 
 WORKDIR /workspace
 ENTRYPOINT ["/init.sh"]

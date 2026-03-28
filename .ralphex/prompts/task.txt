@@ -32,15 +32,26 @@ STEP 1 - IMPLEMENT:
 - Write tests for the implementation
 
 STEP 2 - VALIDATE:
-- Run the test and lint commands specified in the plan (e.g., "cargo test", "go test ./...", etc.)
-- For this project use: make lint && make typecheck && make test-unit
-- All make commands auto-detect whether the Docker app container is running and exec inside it if so
-- When the app is running in Docker (make dev), make test-e2e is also available for E2E validation
+- For this project use: yarn lint && yarn typecheck && yarn test:unit
+- IMPORTANT: Do NOT use `make` commands for validation — `make` wraps commands in `docker exec` which fails inside the ralphex-dk container. Always use `yarn` directly.
+- E2E validation: yarn test:e2e (Playwright auto-starts yarn dev on demand via webServer config — no need for make dev). When debugging specific test failures, run only the affected files first: `yarn test:e2e tests/e2e/specific.spec.ts` — this is much faster than running all tests. Run the full suite only for final validation.
+- When E2E tests fail, read the extended trace to understand the failure: check `test-results/<test-name>/error-context.md` for page snapshots and DOM state. Do NOT rely solely on stdout error messages — they often lack context. Look at what the page actually rendered and what network requests were made.
 - Fix any failures, repeat until all validation passes
+
+STEP 2.5 - DOC SYNC (after validation passes, before commit):
+- Check if the current task modified any of these: zenstack/schema.zmodel, src/app/**/page.tsx, src/app/**/route.ts, src/lib/ module structure, 
+- If YES, update the corresponding docs/architecture/*.md Mermaid diagrams inline by reading the changed source files and rewriting the affected diagram sections:
+  - schema.zmodel changes → update docs/architecture/erd.md
+  - New/changed pages or API routes → update docs/architecture/routes.md
+  - New/changed src/lib/ or src/components/ modules → update docs/architecture/modules.md
+  - Auth flow changes → update docs/architecture/auth-flow.md
+  - New external services or major architecture changes → update docs/architecture/system-overview.md
+- If NO relevant files were changed, skip this step
 
 STEP 3 - COMPLETE (after validation passes):
 - Update progress: edit {{PLAN_FILE}} and change [ ] to [x] for each checkbox you implemented in the current Task section
 - Commit all changes (code + updated plan) with message: feat: <brief task description>
+- Push the commit to the remote branch: git push origin HEAD (this creates the remote branch on first push; if push fails due to missing origin remote or auth issues, log a warning but continue)
 - Check if any [ ] checkboxes remain in other sections
 - If NO more [ ] checkboxes in the entire plan, output exactly: <<<RALPHEX:ALL_TASKS_DONE>>>
 - If more sections have [ ] checkboxes, STOP HERE - do not continue
@@ -54,7 +65,7 @@ OUTPUT FORMAT: No markdown formatting (no **bold**, `code`, # headers). Plain te
 ## Stack-Specific Rules for T3 Extended SaaS Template
 
 - node_modules are prebuilt in the Docker image. If you see module-not-found or resolution errors (e.g. after package.json changes), run: yarn install --frozen-lockfile
-- After ANY change to zenstack/schema.zmodel, run make codegen && make db-push BEFORE touching frontend
+- After ANY change to zenstack/schema.zmodel, run make codegen && make db-migrate BEFORE touching frontend
 - Client components: useClientQueries(schema) from @zenstackhq/tanstack-query/react, import schema from @/lib/zenstack/generated/schema-lite (NOT schema.ts)
 - Server components: requireSession() -> sessionToDbAuth() -> bindDbAuth() chain is mandatory
 - Never edit src/lib/zenstack/generated/ — regenerate instead

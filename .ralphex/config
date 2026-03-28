@@ -6,3 +6,12 @@ codex_enabled = false
 
 # plans directory
 plans_dir = docs/plans
+
+# enable finalize step (rebase, validate, push) after all tasks complete
+# PR creation is handled separately via /create-pr command
+finalize_enabled = true
+
+# rate limit handling — wait and retry instead of exiting
+# critical for orchestrated runs with many parallel processes
+wait_on_limit = 1h
+claude_limit_patterns = You've hit your limit,rate limit,Too Many Requests
