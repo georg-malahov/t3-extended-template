@@ -37,14 +37,14 @@ The port was done as a batch operation. This plan verifies everything is correct
 
 ### Task 2: Validate cross-references between files
 
-- [ ] Verify Dockerfile.ralphex COPY paths match actual files in `.claude/docker/`
-- [ ] Verify Makefile targets reference correct yarn scripts from package.json
-- [ ] Verify CI workflow references match Makefile patterns (container naming, image name)
-- [ ] Verify CLAUDE.md Makefile table matches actual Makefile targets
-- [ ] Verify CLAUDE.md env vars table matches .env.example variables
-- [ ] Verify vercel.json buildCommand references valid package.json scripts (db:migrate not db:push)
-- [ ] Verify .gitignore covers all generated/runtime files mentioned in CLAUDE.md
-- [ ] Verify eslint ignores match directories present in project
+- [x] Verify Dockerfile.ralphex COPY paths match actual files in `.claude/docker/`
+- [x] Verify Makefile targets reference correct yarn scripts from package.json
+- [x] Verify CI workflow references match Makefile patterns (container naming, image name)
+- [x] Verify CLAUDE.md Makefile table matches actual Makefile targets
+- [x] Verify CLAUDE.md env vars table matches .env.example variables
+- [x] Verify vercel.json buildCommand references valid package.json scripts (db:migrate not db:push)
+- [x] Verify .gitignore covers all generated/runtime files mentioned in CLAUDE.md
+- [x] Verify eslint ignores match directories present in project
 
 ### Task 3: Validate ralphex and Claude tooling consistency
 
