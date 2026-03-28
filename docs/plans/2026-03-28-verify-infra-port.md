@@ -60,13 +60,13 @@ The port was done as a batch operation. This plan verifies everything is correct
 
 ### Task 4: Validate Docker and CI infrastructure
 
-- [ ] Verify Dockerfile.ralphex doesn't reference mail-init.sh, poste-shim.js, or any mail packages
-- [ ] Verify Dockerfile.ralphex init script append order is correct (pg → minio → doppler → app)
-- [ ] Verify env-init.sh overrides match Dockerfile ENV defaults
-- [ ] Verify CI ci.yml does NOT have mail server wait step
-- [ ] Verify CI build-dev-image.yml paths-trigger list is complete (docker files + package.json + yarn.lock)
-- [ ] Verify scripts/session-start.sh and scripts/cloud-setup.sh have no theomedis-specific logic
-- [ ] Verify scripts are executable (`chmod +x`)
+- [x] Verify Dockerfile.ralphex doesn't reference mail-init.sh, poste-shim.js, or any mail packages
+- [x] Verify Dockerfile.ralphex init script append order is correct (pg → minio → doppler → app)
+- [x] Verify env-init.sh overrides match Dockerfile ENV defaults
+- [x] Verify CI ci.yml does NOT have mail server wait step
+- [x] Verify CI build-dev-image.yml paths-trigger list is complete (docker files + package.json + yarn.lock)
+- [x] Verify scripts/session-start.sh and scripts/cloud-setup.sh have no theomedis-specific logic
+- [x] Verify scripts are executable (`chmod +x`)
 
 ### Task 5: Run validation and commit fixes
 
