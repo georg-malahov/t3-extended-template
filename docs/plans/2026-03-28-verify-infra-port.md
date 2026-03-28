@@ -29,11 +29,11 @@ The port was done as a batch operation. This plan verifies everything is correct
 
 ### Task 1: Verify no domain-specific references remain
 
-- [ ] Search all tracked files for `theomedis`, `physio`, `fall`, `patient`, `therapeut`, `einladung`, `termin`, `email-matching`, `email-verarbeitung`, `email-reassignment`, `fall-id`, `fall-stufe`, `dokument`, `vorlage`, `auditEintrag` — fix any hits
-- [ ] Search for mail server references: `dovecot`, `postfix`, `poste`, `mail-init`, `poste-shim`, `IMAP`, `SMTP`, `imapflow`, `nodemailer`, `EMAIL_ENCRYPTION_KEY` — fix any hits
-- [ ] Search for theomedis-specific test accounts: `TEST_OWNER_`, `TEST_ADMIN_`, `TEST_OPERATOR_`, `TEST_THERAPEUT_`, `POSTE_ADMIN`, `SSRF_ALLOWED` — fix any hits
-- [ ] Verify `MINIO_BUCKET` references consistently use `app-storage` (not `theomedis`)
-- [ ] Verify container name prefix is consistently `t3app-` everywhere (Makefile, CI, bin/ralphex-dk)
+- [x] Search all tracked files for `theomedis`, `physio`, `fall`, `patient`, `therapeut`, `einladung`, `termin`, `email-matching`, `email-verarbeitung`, `email-reassignment`, `fall-id`, `fall-stufe`, `dokument`, `vorlage`, `auditEintrag` — fix any hits
+- [x] Search for mail server references: `dovecot`, `postfix`, `poste`, `mail-init`, `poste-shim`, `IMAP`, `SMTP`, `imapflow`, `nodemailer`, `EMAIL_ENCRYPTION_KEY` — fix any hits
+- [x] Search for theomedis-specific test accounts: `TEST_OWNER_`, `TEST_ADMIN_`, `TEST_OPERATOR_`, `TEST_THERAPEUT_`, `POSTE_ADMIN`, `SSRF_ALLOWED` — fix any hits
+- [x] Verify `MINIO_BUCKET` references consistently use `app-storage` (not `theomedis`)
+- [x] Verify container name prefix is consistently `t3app-` everywhere (Makefile, CI, bin/ralphex-dk)
 
 ### Task 2: Validate cross-references between files
 
