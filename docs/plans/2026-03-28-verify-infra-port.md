@@ -70,7 +70,7 @@ The port was done as a batch operation. This plan verifies everything is correct
 
 ### Task 5: Run validation and commit fixes
 
-- [ ] Run `yarn lint` (may require container — verify it works)
-- [ ] Run `yarn typecheck` (may require container — verify it works)
-- [ ] Commit any fixes found in tasks 1-4
-- [ ] Verify no uncommitted changes remain
+- [x] Run `yarn lint` (may require container — verify it works)
+- [x] Run `yarn typecheck` (may require container — verify it works)
+- [x] Commit any fixes found in tasks 1-4
+- [x] Verify no uncommitted changes remain
