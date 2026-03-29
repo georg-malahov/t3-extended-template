@@ -249,7 +249,7 @@ Each task runs in a fresh Claude Code subprocess — no context drift.
 ### Installation
 
 - **Native (macOS):** `brew install umputun/apps/ralphex`
-- **Docker wrapper:** auto-installed on first `make ralphex-dk` run, or manually:
+- **Docker wrapper:** install manually:
   `curl -sL https://raw.githubusercontent.com/umputun/ralphex/master/scripts/ralphex-dk.sh -o ~/.local/bin/ralphex-dk && chmod +x ~/.local/bin/ralphex-dk`
 - **Custom Docker image (first time):** `make ralphex-build` — builds `ralphex-t3` with PostgreSQL, MinIO (S3), Doppler CLI, GitHub CLI, Playwright Chromium, and full dev toolchain for self-contained E2E testing
 

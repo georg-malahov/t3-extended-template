@@ -19,8 +19,9 @@ fi
 # whether Doppler provided values pointing to external hosts.
 export DATABASE_URL="postgresql://postgres@localhost:5432/app"
 export AUTH_DATABASE_URL="postgresql://postgres@localhost:5432/app?options=-csearch_path%3Dauth"
-export APP_URL="http://localhost:3000"
-export BETTER_AUTH_URL="http://localhost:3000/api/auth"
+export APP_URL="${APP_URL:-http://localhost:3000}"
+export BETTER_AUTH_URL="${BETTER_AUTH_URL:-http://localhost:3000/api/auth}"
+export PLAYWRIGHT_BASE_URL="http://localhost:3000"
 export NODE_ENV="development"
 export MINIO_ENDPOINT="http://localhost:9000"
 export MINIO_ACCESS_KEY="minioadmin"
