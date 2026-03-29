@@ -151,7 +151,7 @@ jobs:
       - name: Wait for app to be ready
         run: |
           for i in $(seq 1 60); do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null | grep -q "200"; then
+            if curl -sf -o /dev/null http://localhost:3000 2>/dev/null; then
               echo "App is ready at http://localhost:3000"
               exit 0
             fi

@@ -53,13 +53,22 @@ echo "    DOPPLER_CONFIG: ${DOPPLER_CONFIG:-<unset>}"
 echo "    Working dir: $(pwd)"
 echo "    doppler.yaml exists: $([ -f doppler.yaml ] && echo yes || echo no)"
 
-# Quick connectivity test
-if curl -sf --max-time 5 "https://api.doppler.com/v3/me" -H "Authorization: Bearer ${DOPPLER_TOKEN:-none}" >/dev/null 2>&1; then
-  echo "    Doppler API reachable: yes"
+# Quick connectivity test — use doppler CLI to avoid exposing token in process args
+if [ -n "${DOPPLER_TOKEN:-}" ] && command -v doppler &>/dev/null; then
+  if doppler secrets --only-names --no-interactive 2>/dev/null | head -1 >/dev/null; then
+    echo "    Doppler API reachable: yes"
+  else
+    echo "    Doppler API reachable: no (doppler CLI returned exit code $?)"
+  fi
+elif [ -n "${DOPPLER_TOKEN:-}" ]; then
+  # Fallback: test connectivity without exposing token in process args
+  if curl -sf --max-time 5 "https://api.doppler.com/v3/me" -H @- >/dev/null 2>&1 <<< "Authorization: Bearer ${DOPPLER_TOKEN}"; then
+    echo "    Doppler API reachable: yes"
+  else
+    echo "    Doppler API reachable: no (exit code $?)"
+  fi
 else
-  echo "    Doppler API reachable: no (exit code $?)"
-  # Show more detail
-  curl -sf --max-time 5 "https://api.doppler.com/v3/me" -H "Authorization: Bearer ${DOPPLER_TOKEN:-none}" 2>&1 | head -3 || true
+  echo "    Doppler API reachable: skipped (no DOPPLER_TOKEN)"
 fi
 
 # ---------------------------------------------------------------------------
