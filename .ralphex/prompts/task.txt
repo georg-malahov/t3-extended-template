@@ -39,7 +39,7 @@ STEP 2 - VALIDATE:
 - Fix any failures, repeat until all validation passes
 
 STEP 2.5 - DOC SYNC (after validation passes, before commit):
-- Check if the current task modified any of these: zenstack/schema.zmodel, src/app/**/page.tsx, src/app/**/route.ts, src/lib/ module structure, 
+- Check if the current task modified any of these: zenstack/schema.zmodel, src/app/**/page.tsx, src/app/**/route.ts, src/lib/ module structure
 - If YES, update the corresponding docs/architecture/*.md Mermaid diagrams inline by reading the changed source files and rewriting the affected diagram sections:
   - schema.zmodel changes → update docs/architecture/erd.md
   - New/changed pages or API routes → update docs/architecture/routes.md

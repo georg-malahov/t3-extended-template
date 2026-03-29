@@ -3,6 +3,7 @@
 coverage
 node_modules
 playwright-report
+blob-report
 test-results
 tests/e2e/screenshots
 yarn-error.log

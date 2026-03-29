@@ -291,7 +291,7 @@ Format: `### Task N:` sections with `[ ]` checkboxes
 Completed plans move to `docs/plans/completed/` automatically.
 
 ### Validation (runs automatically after every task)
-`make lint && make typecheck && make test-unit` (configured in `.ralphex/prompts/task.txt`)
+`yarn lint && yarn typecheck && yarn test:unit` (configured in `.ralphex/prompts/task.txt`; `make` commands are not used inside the ralphex-dk container)
 
 ### Plan File Format
 
@@ -306,7 +306,7 @@ Completed plans move to `docs/plans/completed/` automatically.
 
 ### Task 1: Schema changes
 - [ ] Add [Model] to zenstack/schema.zmodel with @@allow policies
-- [ ] Run make codegen && make db-migrate
+- [ ] Run yarn db:generate && yarn db:migrate
 
 ### Task 2: Backend / server components
 - [ ] Create server component with requireSession() chain
@@ -321,8 +321,8 @@ Completed plans move to `docs/plans/completed/` automatically.
 - [ ] Unit tests co-located with utilities
 
 ### Task 5: Final E2E verification
-- [ ] Run `make test-e2e` — all browser tests must pass
-- [ ] Run `make test-unit && make typecheck && make lint`
+- [ ] Run `yarn test:e2e` — all browser tests must pass
+- [ ] Run `yarn test:unit && yarn typecheck && yarn lint`
 ```
 
 ## Environment variables reference
@@ -334,7 +334,8 @@ All vars are in Doppler. The canonical schema is in `src/lib/env.ts`.
 | `NODE_ENV` | yes | `development` / `test` / `production` |
 | `APP_URL` | yes | App base URL (e.g. `http://localhost:3000`) |
 | `DATABASE_URL` | yes | PostgreSQL connection string |
-| `AUTH_DATABASE_URL` | no | Auto-derived from DATABASE_URL with auth schema search_path || `AUTH_SECRET` | yes | Secret for Better Auth session signing |
+| `AUTH_DATABASE_URL` | no | Auto-derived from DATABASE_URL with auth schema search_path |
+| `AUTH_SECRET` | yes | Secret for Better Auth session signing |
 | `BETTER_AUTH_URL` | yes | Better Auth base URL |
 | `PLAYWRIGHT_BASE_URL` | no | Base URL for E2E tests |
 | `MINIO_ENDPOINT` | no | MinIO/S3 endpoint URL (e.g. `http://localhost:9000`) |
@@ -354,7 +355,7 @@ All vars are in Doppler. The canonical schema is in `src/lib/env.ts`.
 1. Better Auth `auth` schema vs ZenStack `public` schema are SEPARATE. Never cross them.
 2. ALWAYS `make codegen` then `make db-migrate-dev` (to create migration) then `make db-migrate` (to deploy) after `schema.zmodel` changes.
 3. `proxy.ts` is OPTIMISTIC only. Real auth is in Server Components + ZenStack policies.
-4. Always use `bindDbAuth()`/`getEnhancedPrisma()` — bypassing ZenStack bypasses policies.
+4. Always use `bindDbAuth()` — bypassing ZenStack bypasses policies.
 5. Generated files in `src/lib/zenstack/generated/` are excluded from ESLint. Never edit them.
 6. App requires Doppler-injected env vars. `src/lib/env.ts` validates at startup.
 7. shadcn/ui components are COPIED into `src/components/ui/`, not installed as a package.
