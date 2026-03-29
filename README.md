@@ -19,7 +19,7 @@ Greenfield SaaS starter built on Next.js 16, TypeScript, yarn, shadcn/ui, Better
 - PostgreSQL 16 for local, preview, and production data
 - Vitest for unit tests
 - Playwright for end-to-end tests
-- Docker (single `ralphex-t3` container) for local development
+- Docker (single `t3-template-ralphex` container) for local development
 - Doppler for all runtime configuration
 
 ## Quick Start
@@ -30,7 +30,7 @@ Greenfield SaaS starter built on Next.js 16, TypeScript, yarn, shadcn/ui, Better
 4. Build the dev container (first time only): `make ralphex-build`
 5. Start the full local stack with `make dev`.
 
-That command starts a single Docker container (`ralphex-t3`) with PostgreSQL 16, MinIO (S3), and the Next.js dev server. Doppler secrets are auto-downloaded and injected into the container.
+That command starts a single Docker container (`t3-template-ralphex`) with PostgreSQL 16, MinIO (S3), and the Next.js dev server. Doppler secrets are auto-downloaded and injected into the container.
 
 ## Make Targets
 
@@ -50,7 +50,7 @@ That command starts a single Docker container (`ralphex-t3`) with PostgreSQL 16,
 - `make db-seed`: seed sample data.
 - `make auth-generate`: generate Better Auth migration SQL.
 - `make auth-migrate`: apply Better Auth schema migrations.
-- `make ralphex-build`: build the `ralphex-t3` Docker image.
+- `make ralphex-build`: build the `t3-template-ralphex` Docker image.
 
 ## Required Environment Variables
 
@@ -124,7 +124,7 @@ Playwright auto-starts the dev server via its `webServer` config, so E2E tests a
 
 GitHub Actions:
 
-- `.github/workflows/ci.yml` runs schema generation, database prep, lint, typecheck, unit tests, E2E tests (sharded), and a production build — all inside the `ralphex-t3` Docker container.
+- `.github/workflows/ci.yml` runs schema generation, database prep, lint, typecheck, unit tests, E2E tests (sharded), and a production build — all inside the `t3-template-ralphex` Docker container.
 - `.github/workflows/build-dev-image.yml` builds and caches the dev Docker image for CI.
 
 Both workflows expect a `DOPPLER_TOKEN` secret and use the `ci` Doppler config.

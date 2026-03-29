@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 YARN ?= yarn
-IMAGE := ralphex-t3
+IMAGE := t3-template-ralphex
 
 # Derive a unique container name from the directory basename.
 # Worktrees get different names → isolated containers, volumes, and ports.
@@ -53,9 +53,17 @@ dev:
 	  -v $(NM_VOLUME):/workspace/node_modules \
 	  -p "$$port:3000" \
 	  $$env_file_flag \
-	  -e APP_URL="http://localhost:$$port" \
-	  -e BETTER_AUTH_URL="http://localhost:$$port/api/auth" \
+	  -e DATABASE_URL="postgresql://postgres@localhost:5432/app" \
+	  -e AUTH_DATABASE_URL="postgresql://postgres@localhost:5432/app?options=-csearch_path%3Dauth" \
+	  -e APP_URL="http://localhost:3000" \
+	  -e BETTER_AUTH_URL="http://localhost:3000/api/auth" \
 	  -e PLAYWRIGHT_BASE_URL="http://localhost:3000" \
+	  -e AUTH_SECRET="tZWssbPUE8cxF7JwsLxKuiE8lBaWC/eFEB9AUKzEUzA=" \
+	  -e NODE_ENV="development" \
+	  -e MINIO_ENDPOINT="http://localhost:9000" \
+	  -e MINIO_ACCESS_KEY="minioadmin" \
+	  -e MINIO_SECRET_KEY="minioadmin" \
+	  -e MINIO_BUCKET="app-storage" \
 	  $(IMAGE) sleep infinity; \
 	echo "Waiting for services (init.sh runs via entrypoint)..."; \
 	pg_ready=0; \
@@ -167,6 +175,6 @@ stop:
 
 # Build the custom ralphex Docker image (PostgreSQL + MinIO + Playwright + full dev toolchain)
 ralphex-build:
-	docker build -t ralphex-t3 -f .claude/docker/Dockerfile.ralphex .
+	docker build -t t3-template-ralphex -f .claude/docker/Dockerfile.ralphex .
 	@echo "Removing stale ralphex node_modules volumes (will be repopulated on next run)..."
 	-docker volume ls -q --filter 'name=-nm$$' | grep t3app | xargs -r docker volume rm 2>/dev/null || true

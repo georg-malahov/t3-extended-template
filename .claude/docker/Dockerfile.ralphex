@@ -5,8 +5,8 @@
 # Uses multi-stage: copies ralphex + Claude Code from the official Alpine image
 # into a Debian base where Playwright's Chromium works natively.
 #
-# Build:  docker build -t ralphex-t3 -f .claude/docker/Dockerfile.ralphex .
-# Usage:  RALPHEX_IMAGE=ralphex-t3 make ralphex-dk PLAN=docs/plans/xxx.md
+# Build:  docker build -t t3-template-ralphex -f .claude/docker/Dockerfile.ralphex .
+# Usage:  RALPHEX_IMAGE=t3-template-ralphex make ralphex-dk PLAN=docs/plans/xxx.md
 
 # --- Stage 1: extract binaries from official ralphex image ---
 FROM ghcr.io/umputun/ralphex:latest AS ralphex-src

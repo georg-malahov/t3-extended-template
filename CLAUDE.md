@@ -13,7 +13,7 @@ Vitest 4.0, Playwright 1.58, Docker, Doppler (env management).
 
 ## Environment setup
 
-Development uses a single `ralphex-t3` Docker container that includes PostgreSQL 16, MinIO (S3), Doppler CLI, GitHub CLI, Node.js 24, and Playwright Chromium. No host-native setup required beyond Docker.
+Development uses a single `t3-template-ralphex` Docker container that includes PostgreSQL 16, MinIO (S3), Doppler CLI, GitHub CLI, Node.js 24, and Playwright Chromium. No host-native setup required beyond Docker.
 
 ```bash
 make ralphex-build   # build the image (first time only, ~10-15 min cold)
@@ -131,7 +131,7 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 
 ## Makefile (Primary Interface)
 
-**Single container:** Most targets require the `ralphex-t3` container (started by `make dev` or by ralphex). Commands auto-detect the running container and execute inside it. Playwright auto-starts `yarn dev` on demand via its `webServer` config, so E2E tests work without `make dev`.
+**Single container:** Most targets require the `t3-template-ralphex` container (started by `make dev` or by ralphex). Commands auto-detect the running container and execute inside it. Playwright auto-starts `yarn dev` on demand via its `webServer` config, so E2E tests work without `make dev`.
 
 | Command | Description |
 |---------|-------------|
@@ -153,7 +153,7 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 | `make db-seed` | Seed sample data |
 | `make auth-generate` | Generate Better Auth migration SQL |
 | `make auth-migrate` | Run Better Auth schema migrations |
-| `make ralphex-build` | Build the ralphex-t3 Docker image |
+| `make ralphex-build` | Build the t3-template-ralphex Docker image |
 
 ## CRITICAL: After Modifying `schema.zmodel`
 
@@ -251,7 +251,7 @@ Each task runs in a fresh Claude Code subprocess — no context drift.
 - **Native (macOS):** `brew install umputun/apps/ralphex`
 - **Docker wrapper:** install manually:
   `curl -sL https://raw.githubusercontent.com/umputun/ralphex/master/scripts/ralphex-dk.sh -o ~/.local/bin/ralphex-dk && chmod +x ~/.local/bin/ralphex-dk`
-- **Custom Docker image (first time):** `make ralphex-build` — builds `ralphex-t3` with PostgreSQL, MinIO (S3), Doppler CLI, GitHub CLI, Playwright Chromium, and full dev toolchain for self-contained E2E testing
+- **Custom Docker image (first time):** `make ralphex-build` — builds `t3-template-ralphex` with PostgreSQL, MinIO (S3), Doppler CLI, GitHub CLI, Playwright Chromium, and full dev toolchain for self-contained E2E testing
 
 ### Workflow
 
