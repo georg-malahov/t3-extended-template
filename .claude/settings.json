@@ -9,8 +9,12 @@
       "Bash(yarn test:e2e)",
       "Bash(yarn test:e2e:ui)",
       "Bash(yarn db:generate)",
-      "Bash(yarn db:push)",
+      "Bash(yarn db:migrate)",
+      "Bash(yarn db:migrate:dev)",
+      "Bash(yarn db:migrate:status)",
       "Bash(yarn db:seed)",
+      "Bash(yarn auth:generate)",
+      "Bash(yarn auth:migrate)",
       "Bash(yarn build)",
       "Bash(yarn dev)",
       "Bash(yarn add *)",
@@ -23,13 +27,33 @@
       "Bash(git branch *)",
       "Bash(git checkout *)",
       "Bash(git stash *)",
+      "Bash(git worktree *)",
+      "Bash(git merge *)",
+      "Bash(git fetch *)",
+      "Bash(git push *)",
+      "Bash(git rebase *)",
       "Bash(ls *)",
       "Bash(wc *)",
       "Bash(mkdir *)",
       "Bash(tree *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(grep *)",
+      "Bash(sed *)",
+      "Bash(python3 *)",
+      "Bash(docker exec *)",
+      "Bash(docker ps *)",
+      "Bash(docker stop *)",
+      "Bash(docker volume *)",
+      "Bash(docker image *)",
       "Bash(ralphex *)",
+      "Bash(bin/ralphex-dk *)",
       "Bash(bash .claude/scripts/ralphex-dk.sh *)",
       "Bash(docker pull ghcr.io/umputun/ralphex:latest)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "Bash(gh api *)",
       "Read",
       "Edit",
       "Write",
@@ -42,6 +66,17 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/session-start.sh"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -51,10 +86,20 @@
             "command": ".claude/hooks/lint-on-save.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/docs-reminder.sh"
+          }
+        ]
       }
     ]
   },
   "enabledPlugins": {
-    "ralphex@ralphex": true
+    "ralphex@ralphex": true,
+    "plannotator@plannotator": true
   }
 }

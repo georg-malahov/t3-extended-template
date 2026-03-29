@@ -1,10 +1,10 @@
 # SaaS Template
 
-Greenfield SaaS starter built on Next.js 16, TypeScript, yarn, shadcn/ui, Better Auth, ZenStack v3, PostgreSQL 16, Vitest, Playwright, Docker, Coolify, and Doppler.
+Greenfield SaaS starter built on Next.js 16, TypeScript, yarn, shadcn/ui, Better Auth, ZenStack v3, PostgreSQL 16, Vitest, Playwright, Docker, and Doppler.
 
 ## Runtime
 
-- Node `20.19.0+`
+- Node `24+`
 - yarn `1.22.22`
 - Docker Desktop or Docker Engine
 - Doppler CLI
@@ -19,7 +19,7 @@ Greenfield SaaS starter built on Next.js 16, TypeScript, yarn, shadcn/ui, Better
 - PostgreSQL 16 for local, preview, and production data
 - Vitest for unit tests
 - Playwright for end-to-end tests
-- Docker + Coolify for deployment
+- Docker (single `t3-template-ralphex` container) for local development
 - Doppler for all runtime configuration
 
 ## Quick Start
@@ -27,23 +27,30 @@ Greenfield SaaS starter built on Next.js 16, TypeScript, yarn, shadcn/ui, Better
 1. Install Doppler and authenticate with `doppler login`.
 2. Run `doppler setup`.
 3. Make sure your Doppler `dev` config includes the environment variables listed below.
-4. Start the full local stack with `make dev`.
+4. Build the dev container (first time only): `make ralphex-build`
+5. Start the full local stack with `make dev`.
 
-That command runs `docker compose up --build` through Doppler so the app container receives the same environment values as CI, preview, and production.
+That command starts a single Docker container (`t3-template-ralphex`) with PostgreSQL 16, MinIO (S3), and the Next.js dev server. Doppler secrets are auto-downloaded and injected into the container.
 
 ## Make Targets
 
-- `make dev`: run the Docker-first local stack.
-- `make dev-local`: run Next.js directly on your machine through Doppler.
-- `make build`: run a production build through Doppler.
+- `make dev`: start the container + all services + dev server.
+- `make stop`: stop and remove the container.
+- `make logs`: stream container logs.
+- `make shell`: interactive bash shell inside the container.
+- `make build`: run a production build.
 - `make lint`: run ESLint.
 - `make typecheck`: run TypeScript checks.
 - `make test-unit`: run Vitest.
-- `make test-e2e`: run Playwright.
-- `make codegen`: regenerate ZenStack artifacts.
-- `make auth-migrate`: apply Better Auth migrations.
-- `make db-push`: push the ZenStack schema to PostgreSQL.
-- `make db-seed`: seed the starter project for the first available user.
+- `make test-e2e`: run Playwright E2E tests (inside container).
+- `make codegen`: regenerate ZenStack artifacts after schema changes.
+- `make db-migrate-dev`: create a new migration (development only).
+- `make db-migrate`: deploy pending migrations to the database.
+- `make db-migrate-status`: check migration status.
+- `make db-seed`: seed sample data.
+- `make auth-generate`: generate Better Auth migration SQL.
+- `make auth-migrate`: apply Better Auth schema migrations.
+- `make ralphex-build`: build the `t3-template-ralphex` Docker image.
 
 ## Required Environment Variables
 
@@ -53,37 +60,25 @@ All environment variables are expected to come from Doppler. The app validates t
 - `BETTER_AUTH_URL`
 - `AUTH_SECRET`
 - `DATABASE_URL`
-- `AUTH_DATABASE_URL`
+
+Optional:
+
+- `AUTH_DATABASE_URL` (auto-derived from `DATABASE_URL` with `search_path=auth`)
 - `PLAYWRIGHT_BASE_URL` for CI and local E2E
-- `DOPPLER_PROJECT`
-- `DOPPLER_CONFIG`
-
-Recommended Doppler configs:
-
-- `dev`
-- `test`
-- `ci`
-- `preview`
-- `prod`
+- `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`
+- `BLOB_READ_WRITE_TOKEN` (when set, Vercel Blob is used instead of MinIO)
 
 `AUTH_DATABASE_URL` should point to the same PostgreSQL instance as `DATABASE_URL`, but use PostgreSQL `search_path=auth` so Better Auth tables live in the `auth` schema while ZenStack app models stay in the default app schema.
 
 ## Local Development
 
-`make dev` starts:
+`make dev` starts a single Docker container that runs:
 
-- `db`: PostgreSQL 16
-- `app`: Next.js app container
+- PostgreSQL 16
+- MinIO (S3-compatible object storage)
+- Next.js dev server
 
-The app container runs:
-
-1. `yarn install`
-2. `yarn db:generate`
-3. `yarn auth:migrate`
-4. `yarn db:push`
-5. `yarn dev --hostname 0.0.0.0 --port 3000`
-
-That gives every developer the same boot path on macOS, Linux, or Windows with Docker.
+Each worktree gets its own container name, node_modules volume, and auto-assigned port — multiple worktrees can run `make dev` simultaneously.
 
 ## Auth And Data Model
 
@@ -118,31 +113,24 @@ The generated RPC API is mounted at `src/app/api/model/[...path]/route.ts`, and 
 - Playwright config lives in `playwright.config.ts`.
 - The starter E2E path covers sign-up and project CRUD.
 
-To run local E2E tests against a Doppler-configured environment:
+To run E2E tests:
 
-1. Start the app with `make dev` or `make dev-local`.
-2. Run `doppler run -- yarn auth:migrate`.
-3. Run `doppler run -- yarn db:push`.
-4. Run `make test-e2e`.
+1. Start the app with `make dev`.
+2. Run `make test-e2e`.
 
-## CI And Coolify
+Playwright auto-starts the dev server via its `webServer` config, so E2E tests also work without `make dev` when running inside the container.
+
+## CI
 
 GitHub Actions:
 
-- `.github/workflows/ci.yml` runs schema generation, database prep, lint, typecheck, unit tests, and a production build.
-- `.github/workflows/e2e.yml` runs Playwright against PostgreSQL 16.
+- `.github/workflows/ci.yml` runs schema generation, database prep, lint, typecheck, unit tests, E2E tests (sharded), and a production build — all inside the `t3-template-ralphex` Docker container.
+- `.github/workflows/build-dev-image.yml` builds and caches the dev Docker image for CI.
 
 Both workflows expect a `DOPPLER_TOKEN` secret and use the `ci` Doppler config.
-
-Coolify:
-
-- Use a normal app deployment for production.
-- Enable native preview deployments for pull requests.
-- Configure a wildcard preview domain.
-- Keep preview Doppler config or scoped preview secrets separate from production.
-- Prefer a dedicated PostgreSQL resource/service over bundling preview databases into a single Compose preview stack.
 
 ## Architecture
 
 Next.js server code, Better Auth, and ZenStack all run in the same TypeScript app and share the same PostgreSQL backend. CRUD routes are generated from the ZenStack schema, and the frontend consumes typed TanStack Query hooks derived from the same source model.
-# t3-extended-template
+
+Architecture diagrams are maintained in `docs/architecture/` — regenerate with `/generate-docs`.

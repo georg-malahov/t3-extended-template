@@ -15,11 +15,13 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:generate": "zen generate --schema zenstack/schema.zmodel --lite",
-    "db:push": "zen db push --schema zenstack/schema.zmodel --accept-data-loss",
     "db:seed": "tsx scripts/seed.ts",
     "db:ensure-auth-schema": "node scripts/ensure-auth-schema.mjs",
     "auth:generate": "better-auth generate --config src/lib/auth.ts --yes --output better-auth.sql",
-    "auth:migrate": "better-auth migrate --config src/lib/auth.ts --yes"
+    "auth:migrate": "better-auth migrate --config src/lib/auth.ts --yes",
+    "db:migrate": "zen migrate deploy --schema zenstack/schema.zmodel",
+    "db:migrate:dev": "zen migrate dev --schema zenstack/schema.zmodel",
+    "db:migrate:status": "zen migrate status --schema zenstack/schema.zmodel"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

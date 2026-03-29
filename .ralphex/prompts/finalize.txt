@@ -1,0 +1,33 @@
+---
+model: haiku
+---
+# finalize prompt — runs once after all tasks and reviews complete
+#
+# available variables:
+#   {{PLAN_FILE}} - path to the plan file being executed
+#   {{PROGRESS_FILE}} - path to the progress log file
+#   {{GOAL}} - human-readable goal description
+#   {{DEFAULT_BRANCH}} - default branch name (main, master, trunk, etc.)
+
+This is the FINALIZE step. All tasks and reviews have completed successfully.
+Your job is to rebase onto the default branch, run final validation, and push.
+
+STEP 1 - REBASE:
+- Run: git fetch origin {{DEFAULT_BRANCH}}
+- Run: git rebase origin/{{DEFAULT_BRANCH}}
+- If rebase conflicts occur, attempt to resolve them. If unresolvable, abort rebase (git rebase --abort), log a warning, and continue without rebasing.
+
+STEP 2 - FINAL VALIDATION:
+- Run: yarn lint && yarn typecheck && yarn test:unit
+- If validation fails, attempt to fix the issues and re-run. If unfixable after reasonable attempts, output <<<RALPHEX:TASK_FAILED>>> — do NOT create a PR against a failing branch.
+
+STEP 3 - PUSH:
+- Run: git push origin HEAD --force-with-lease
+- This creates the remote branch on first push. If push fails due to missing origin remote or auth issues, log a warning but continue.
+
+IMPORTANT: Rebase and push are best-effort — if they fail, log a warning and continue.
+However, if STEP 2 validation fails and cannot be fixed, output <<<RALPHEX:TASK_FAILED>>> — never push a broken branch.
+
+NOTE: PR creation is handled separately via the /create-pr command. Do NOT create a PR here.
+
+OUTPUT FORMAT: No markdown formatting (no **bold**, `code`, # headers). Plain text and - lists are fine.
