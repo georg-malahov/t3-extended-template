@@ -95,8 +95,8 @@ Examples:
 When a plan uses mocks for parallel siblings, document them explicitly in the plan:
 ```markdown
 ### Mocks (removed during merge)
-- `src/components/fall/fall-arbeitsbereich-mock.tsx` — mock workspace shell for standalone tab testing
-- Mock API response for `/api/termin/availability` — returns static slot data
+- `src/components/projects/project-dashboard-mock.tsx` — mock dashboard shell for standalone tab testing
+- Mock API response for `/api/model/project/findMany` — returns static project data
 ```
 
 The merge plan MUST include a task to:
