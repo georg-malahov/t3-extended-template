@@ -1,12 +1,10 @@
 .next
-.yarn-integrity
 coverage
 node_modules
 playwright-report
 blob-report
 test-results
 tests/e2e/screenshots
-yarn-error.log
 .DS_Store
 
 # environment files (managed by Doppler — never commit secrets)

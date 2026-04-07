@@ -4,7 +4,7 @@
 
 T3 Extended SaaS Template — multi-tenant SaaS starter. Schema-driven development with end-to-end type safety.
 
-**Tech Stack:** Next.js 16.1 (App Router, RSC), React 19.2, TypeScript 5.9 (strict), yarn 1.22.22,
+**Tech Stack:** Next.js 16.1 (App Router, RSC), React 19.2, TypeScript 5.9 (strict), Bun 1.x,
 ZenStack v3 (schema-first ORM → Prisma + TS types + TanStack Query hooks),
 Better Auth 1.5 (PostgreSQL adapter), PostgreSQL 16, Kysely,
 shadcn/ui, Radix UI, Tailwind CSS 4.2, TanStack Query 5.90, TanStack Table 8.21,
@@ -13,21 +13,21 @@ Vitest 4.0, Playwright 1.58, Docker, Doppler (env management).
 
 ## Environment setup
 
-Development uses a single `t3-template-ralphex` Docker container that includes PostgreSQL 16, MinIO (S3), Doppler CLI, GitHub CLI, Node.js 24, and Playwright Chromium. No host-native setup required beyond Docker.
+Development uses a single `t3-template-ralphex` Docker container that includes PostgreSQL 16, MinIO (S3), Doppler CLI, GitHub CLI, Bun, and Playwright Chromium. No host-native setup required beyond Docker.
 
 ```bash
-make ralphex-build   # build the image (first time only, ~10-15 min cold)
-make dev             # start container + all services + dev server
-make stop            # stop the container
+bun run image:build  # build the image (first time only, ~10-15 min cold)
+bun run up           # start container + all services + dev server
+bun run down         # stop the container
 ```
 
-Each worktree gets its own container name, node_modules volume, and auto-assigned port — multiple worktrees can run `make dev` simultaneously.
+Each worktree gets its own container name, node_modules volume, and auto-assigned port — multiple worktrees can run `bun run up` simultaneously.
 
 ### Secrets management with Doppler
 
 All environment variables are managed via **Doppler** (project configured in `doppler.yaml`).
 
-`make dev` auto-downloads Doppler secrets (if the CLI is installed on the host) and passes them into the container. All `make` targets execute inside the container.
+`bun run up` auto-downloads Doppler secrets (if the CLI is installed on the host) and passes them into the container.
 
 **When you add a new environment variable:**
 
@@ -37,7 +37,7 @@ All environment variables are managed via **Doppler** (project configured in `do
    ```
 2. Add it to `.env.example` with a comment explaining its purpose.
 3. If the app reads it at runtime, add it to the Zod schema in `src/lib/env.ts`.
-4. Verify the app still starts: `make stop && make dev`
+4. Verify the app still starts: `bun run down && bun run up`
 
 Do NOT hardcode secrets in code or `.env.local`. Always use Doppler as the source of truth.
 
@@ -54,10 +54,10 @@ Do NOT hardcode secrets in code or `.env.local`. Always use Doppler as the sourc
 - These are SEPARATE schemas in the SAME PostgreSQL database. Do NOT mix them.
 
 ```bash
-make codegen          # regenerate Prisma client after schema changes
-make db-migrate-dev   # create a new migration (development only)
-make db-migrate       # deploy pending migrations to DB
-make db-migrate-status # check migration status
+bun run dx bun run db:generate     # regenerate Prisma client after schema changes
+bun run dx bun run db:migrate:dev  # create a new migration (development only)
+bun run dx bun run db:migrate      # deploy pending migrations to DB
+bun run dx bun run db:migrate:status # check migration status
 ```
 
 ## Architecture
@@ -129,44 +129,51 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 - `.claude/docker/` — Docker container configuration (Dockerfile, init scripts)
 - `scripts/` — Setup and utility scripts
 
-## Makefile (Primary Interface)
+## Commands
 
-**Single container:** Most targets require the `t3-template-ralphex` container (started by `make dev` or by ralphex). Commands auto-detect the running container and execute inside it. Playwright auto-starts `yarn dev` on demand via its `webServer` config, so E2E tests work without `make dev`.
+**Docker lifecycle** — managed via TypeScript scripts in `scripts/`:
 
 | Command | Description |
 |---------|-------------|
-| `make dev` | Start container + all services + dev server (auto-downloads Doppler secrets) |
-| `make stop` | Stop and remove the container |
-| `make logs` | Stream container logs |
-| `make shell` | Interactive bash shell inside the container |
-| `make codegen` | Regenerate ZenStack artifacts (**ALWAYS** after schema.zmodel changes) |
-| `make db-migrate` | Deploy pending migrations to PostgreSQL (**ALWAYS** after schema.zmodel changes) |
-| `make db-migrate-dev` | Create a new migration (development only, interactive terminal required) |
-| `make db-migrate-status` | Check migration status (applied/pending) |
-| `make lint` | ESLint |
-| `make typecheck` | TypeScript type checking |
-| `make build` | Production build |
-| `make test-unit` | Vitest unit tests |
-| `make test-e2e` | Playwright E2E tests (inside container; Playwright auto-starts dev server) |
-| `make test-e2e-report` | Open Playwright HTML report in browser (runs on host) |
-| `make test-e2e-review` | Run all E2E tests with full traces + open report (manual host-only, not for CI/ralphex) |
-| `make db-seed` | Seed sample data |
-| `make auth-generate` | Generate Better Auth migration SQL |
-| `make auth-migrate` | Run Better Auth schema migrations |
-| `make ralphex-build` | Build the t3-template-ralphex Docker image |
+| `bun run up` | Start container + all services + dev server (auto-downloads Doppler secrets) |
+| `bun run down` | Stop and remove the container |
+| `bun run logs` | Stream container logs |
+| `bun run dx bash` | Interactive bash shell inside the container |
+| `bun run dx <cmd>` | Run any command inside the container |
+| `bun run image:build` | Build the t3-template-ralphex Docker image |
+
+**Direct commands** — run on host or inside container:
+
+| Command | Description |
+|---------|-------------|
+| `bun run lint` | ESLint |
+| `bun run typecheck` | TypeScript type checking |
+| `bun run build` | Production build |
+| `bun run test:unit` | Vitest unit tests |
+| `bun run test:e2e` | Playwright E2E tests (Playwright auto-starts dev server) |
+| `bun run test:e2e:report` | Open Playwright HTML report in browser |
+| `bun run db:generate` | Regenerate ZenStack artifacts (**ALWAYS** after schema.zmodel changes) |
+| `bun run db:migrate` | Deploy pending migrations to PostgreSQL |
+| `bun run db:migrate:dev` | Create a new migration (development only, interactive) |
+| `bun run db:migrate:status` | Check migration status |
+| `bun run db:seed` | Seed sample data |
+| `bun run auth:generate` | Generate Better Auth migration SQL |
+| `bun run auth:migrate` | Run Better Auth schema migrations |
+
+To run commands inside the container: `bun run dx bun run <script>` (e.g., `bun run dx bun run test:e2e`)
 
 ## CRITICAL: After Modifying `schema.zmodel`
 
-1. `make codegen` — regenerate TypeScript types AND Prisma schema
-2. `make db-migrate-dev` — create a new migration (development only, interactive)
-3. `make db-migrate` — deploy pending migrations to database
+1. `bun run db:generate` — regenerate TypeScript types AND Prisma schema
+2. `bun run db:migrate:dev` — create a new migration (development only, interactive)
+3. `bun run db:migrate` — deploy pending migrations to database
 4. Generated files land in `src/lib/zenstack/generated/` (NEVER edit these manually)
 5. `zenstack/migrations/` is committed to git — never delete or manually edit migration files
 
 ## Adding a New Entity (Standard Pattern)
 
 1. Define model in `zenstack/schema.zmodel` with `@@allow` access policies
-2. `make codegen && make db-migrate-dev && make db-migrate`
+2. `bun run db:generate && bun run db:migrate:dev && bun run db:migrate`
 3. Create `src/components/[entity]/[entity]-view.tsx` using:
    - `useClientQueries(schema)` from `@zenstackhq/tanstack-query/react`
    - `schema` from `@/lib/zenstack/generated/schema-lite` (NOT `schema.ts`)
@@ -222,14 +229,14 @@ const form = useForm({ resolver: zodResolver(formSchema) });
 
 - Co-located: `src/**/*.test.ts` (next to the file they test)
 - Pattern: `describe`/`it`/`expect` from Vitest
-- Run: `yarn test:unit` or `make test-unit`
+- Run: `bun run test:unit`
 - Reference: `src/lib/auth-context.test.ts`
 
 ### E2E Tests (Playwright)
 
 - Location: `tests/e2e/*.spec.ts`
 - Pattern: Full user-flow style, unique data with `crypto.randomUUID().slice(0, 8)`
-- Run: `yarn test:e2e` or `make test-e2e`
+- Run: `bun run test:e2e`
 - Shared helpers: `tests/e2e/helpers/` (e.g., `auth.ts` for sign-up flows)
 - Reference: `tests/e2e/auth.spec.ts`
 
@@ -251,7 +258,7 @@ Each task runs in a fresh Claude Code subprocess — no context drift.
 - **Native (macOS):** `brew install umputun/apps/ralphex`
 - **Docker wrapper:** install manually:
   `curl -sL https://raw.githubusercontent.com/umputun/ralphex/master/scripts/ralphex-dk.sh -o ~/.local/bin/ralphex-dk && chmod +x ~/.local/bin/ralphex-dk`
-- **Custom Docker image (first time):** `make ralphex-build` — builds `t3-template-ralphex` with PostgreSQL, MinIO (S3), Doppler CLI, GitHub CLI, Playwright Chromium, and full dev toolchain for self-contained E2E testing
+- **Custom Docker image (first time):** `bun run image:build` — builds `t3-template-ralphex` with PostgreSQL, MinIO (S3), Doppler CLI, GitHub CLI, Playwright Chromium, and full dev toolchain for self-contained E2E testing
 
 ### Workflow
 
@@ -261,7 +268,7 @@ Each task runs in a fresh Claude Code subprocess — no context drift.
 4. **Docker sandboxed (recommended for unattended runs):** `bin/ralphex-dk docs/plans/[name].md`
    - Self-contained: PostgreSQL, MinIO (S3), Doppler CLI, GitHub CLI, Playwright Chromium — all run inside a single container
    - No external database, Docker socket, or host services needed
-   - First run requires `make ralphex-build` to build the custom image
+   - First run requires `bun run image:build` to build the custom image
    - Set `DOPPLER_TOKEN` in host env for Doppler secrets (auto-passed by `bin/ralphex-dk`)
    - Set `GH_TOKEN` in host env for GitHub PR creation (auto-passed by `bin/ralphex-dk`)
 5. **With web dashboard:** `bin/ralphex docs/plans/[name].md -s -p 8080`
@@ -291,7 +298,7 @@ Format: `### Task N:` sections with `[ ]` checkboxes
 Completed plans move to `docs/plans/completed/` automatically.
 
 ### Validation (runs automatically after every task)
-`yarn lint && yarn typecheck && yarn test:unit` (configured in `.ralphex/prompts/task.txt`; `make` commands are not used inside the ralphex-dk container)
+`bun run lint && bun run typecheck && bun run test:unit` (configured in `.ralphex/prompts/task.txt`)
 
 ### Plan File Format
 
@@ -306,7 +313,7 @@ Completed plans move to `docs/plans/completed/` automatically.
 
 ### Task 1: Schema changes
 - [ ] Add [Model] to zenstack/schema.zmodel with @@allow policies
-- [ ] Run yarn db:generate && yarn db:migrate
+- [ ] Run bun run db:generate && bun run db:migrate
 
 ### Task 2: Backend / server components
 - [ ] Create server component with requireSession() chain
@@ -321,8 +328,8 @@ Completed plans move to `docs/plans/completed/` automatically.
 - [ ] Unit tests co-located with utilities
 
 ### Task 5: Final E2E verification
-- [ ] Run `yarn test:e2e` — all browser tests must pass
-- [ ] Run `yarn test:unit && yarn typecheck && yarn lint`
+- [ ] Run `bun run test:e2e` — all browser tests must pass
+- [ ] Run `bun run test:unit && bun run typecheck && bun run lint`
 ```
 
 ## Environment variables reference
@@ -353,7 +360,7 @@ All vars are in Doppler. The canonical schema is in `src/lib/env.ts`.
 ## Critical Gotchas
 
 1. Better Auth `auth` schema vs ZenStack `public` schema are SEPARATE. Never cross them.
-2. ALWAYS `make codegen` then `make db-migrate-dev` (to create migration) then `make db-migrate` (to deploy) after `schema.zmodel` changes.
+2. ALWAYS `bun run db:generate` then `bun run db:migrate:dev` (to create migration) then `bun run db:migrate` (to deploy) after `schema.zmodel` changes.
 3. `proxy.ts` is OPTIMISTIC only. Real auth is in Server Components + ZenStack policies.
 4. Always use `bindDbAuth()` — bypassing ZenStack bypasses policies.
 5. Generated files in `src/lib/zenstack/generated/` are excluded from ESLint. Never edit them.

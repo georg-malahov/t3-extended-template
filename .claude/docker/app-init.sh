@@ -7,24 +7,24 @@
 
 set -e
 
-if [ ! -f /workspace/node_modules/.yarn-integrity ]; then
+if [ ! -f /workspace/node_modules/.bun-installed ]; then
     if [ -d /prebuilt_node_modules ]; then
-        # Race condition fix: CI checks for .yarn-integrity to know when
-        # node_modules is ready. We must copy .yarn-integrity LAST so it
+        # Race condition fix: CI checks for .bun-installed to know when
+        # node_modules is ready. We must copy the marker LAST so it
         # only appears after all binaries (.bin/) are fully copied.
         #
-        # 1. Temporarily hide .yarn-integrity from the source
+        # 1. Temporarily hide .bun-installed from the source
         # 2. Copy everything else (including .bin/ symlinks)
-        # 3. Restore and copy .yarn-integrity as the final signal
-        mv /prebuilt_node_modules/.yarn-integrity /tmp/.yarn-integrity-hold
+        # 3. Restore and copy .bun-installed as the final signal
+        mv /prebuilt_node_modules/.bun-installed /tmp/.bun-installed-hold
         cp -a /prebuilt_node_modules/. /workspace/node_modules/
-        cp -a /tmp/.yarn-integrity-hold /workspace/node_modules/.yarn-integrity
-        mv /tmp/.yarn-integrity-hold /prebuilt_node_modules/.yarn-integrity
+        cp -a /tmp/.bun-installed-hold /workspace/node_modules/.bun-installed
+        mv /tmp/.bun-installed-hold /prebuilt_node_modules/.bun-installed
         echo "[app-init] populated node_modules volume from prebuilt image"
     elif [ -f /workspace/package.json ]; then
-        echo "[app-init] no prebuilt node_modules found, running yarn install..."
-        cd /workspace && yarn install --frozen-lockfile
-        echo "[app-init] yarn install complete"
+        echo "[app-init] no prebuilt node_modules found, running bun install..."
+        cd /workspace && bun install --frozen-lockfile
+        echo "[app-init] bun install complete"
     else
         echo "[app-init] WARNING: no prebuilt modules and no package.json — node_modules will be empty"
     fi

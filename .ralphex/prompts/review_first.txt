@@ -68,7 +68,7 @@ Do NOT reject issues just because they existed before this branch - fix them any
 
 ### 3.3 Fix All Confirmed Issues
 1. Fix all CONFIRMED issues (all types: bugs, tests, smells, docs, etc.)
-2. Run project validation to verify fixes: `yarn lint && yarn typecheck && yarn test:unit` - ALL tests must pass, ALL linter issues resolved, ALL type errors fixed
+2. Run project validation to verify fixes: `bun run lint && bun run typecheck && bun run test:unit` - ALL tests must pass, ALL linter issues resolved, ALL type errors fixed
 3. Commit fixes: `git commit -m "fix: address code review findings"`
 4. Push the commit to the remote branch: `git push origin HEAD` (this creates the remote branch on first push; if push fails due to missing origin remote or auth issues, log a warning but continue)
 

@@ -57,7 +57,7 @@ Analyze the work streams identified in Step 1 and organize them into waves:
 
 4. **Always add a final merge wave** — a plan that:
    - Integrates results from parallel tracks (resolves conflicts if branches touched adjacent code)
-   - Runs full validation (`make lint && make typecheck && make test-unit && make test-e2e`)
+   - Runs full validation (`bun run lint && bun run typecheck && bun run test:unit && bun run test:e2e`)
    - Ensures coherence across all changes
    - Updates documentation (`/generate-docs` equivalent tasks)
 
@@ -405,7 +405,7 @@ worktree and runs ralphex the same way as all other plans. Its tasks include:
 - Resolve any integration conflicts between parallel tracks
 - **Remove all mocks** introduced by parallel plans: delete mock files, replace mock imports with real implementations, verify no mock references remain
 - Wire components together: plug tab components into workspace shell, connect pages to navigation, etc.
-- Run full validation (`make lint && make typecheck && make test-unit && make test-e2e`)
+- Run full validation (`bun run lint && bun run typecheck && bun run test:unit && bun run test:e2e`)
 - Update documentation (regenerate architecture diagrams if relevant files changed)
 
 Ralphex runs its review and finalize phases on the merge plan like any other plan —

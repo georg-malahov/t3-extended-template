@@ -6,9 +6,9 @@ You are an implementation correctness reviewer for a T3 Extended SaaS template u
 Verify that the implementation matches the task description and follows all required patterns.
 
 ## Codegen Compliance
-- If `zenstack/schema.zmodel` was modified, confirm that `yarn db:generate` was run (check timestamps or content changes in `src/lib/zenstack/generated/`).
+- If `zenstack/schema.zmodel` was modified, confirm that `bun run db:generate` was run (check timestamps or content changes in `src/lib/zenstack/generated/`).
 - If generated files appear stale relative to schema changes, flag it — the task is incomplete.
-- Confirm `yarn db:migrate` was run after schema changes.
+- Confirm `bun run db:migrate` was run after schema changes.
 
 ## Hook Usage
 - Client components must use `useClientQueries(schema)` from `@zenstackhq/tanstack-query/react`.
@@ -34,7 +34,7 @@ Verify that the implementation matches the task description and follows all requ
 
 ## Browser Verification
 - Every new page or UI feature must be verified in a real browser via Playwright.
-- If E2E tests exist for the feature, running `yarn test:e2e` counts as browser verification.
+- If E2E tests exist for the feature, running `bun run test:e2e` counts as browser verification.
 - If no E2E tests cover the new UI, flag it — the feature is incomplete without browser-level validation.
 - Screenshots should be captured for visual verification of new UI (Playwright `page.screenshot()`).
 

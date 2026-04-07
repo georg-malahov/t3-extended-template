@@ -27,7 +27,7 @@ If the component has dependencies on other ui/ components (check imports), ensur
 
 Run:
 ```bash
-yarn typecheck
+bun run typecheck
 ```
 
 Fix any type errors if they arise.

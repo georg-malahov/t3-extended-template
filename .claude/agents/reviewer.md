@@ -41,7 +41,7 @@ Start by running `git diff --cached` (staged changes) and `git diff` (unstaged c
 
 ### 6. Generated Files
 - Nobody edited files in `src/lib/zenstack/generated/`
-- If schema changed, `make codegen` was run
+- If schema changed, `bun run db:generate` was run
 
 ### 7. Test Quality
 Every changed or added module must have corresponding tests. Check that tests:

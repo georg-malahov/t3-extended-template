@@ -41,7 +41,7 @@ The project is a production-ready T3 SaaS template with schema-driven developmen
 ## Step 2: Create `.claude/settings.json`
 
 Project-level settings (committed to git):
-- **Permissions**: Allow `make *`, `yarn lint/typecheck/test:unit/test:e2e`, `npx shadcn@latest *`, `git *`, core read/write tools
+- **Permissions**: Allow `bun run *`, `npx shadcn@latest *`, `git *`, core read/write tools
 - **Deny**: `rm -rf /`, `docker compose down -v`
 - **Hook**: `PostToolUse` on `Edit|Write` → runs `.claude/hooks/lint-on-save.sh`
 
@@ -52,7 +52,7 @@ Project-level settings (committed to git):
 Shell script that:
 1. Reads `PostToolUse` JSON from stdin, extracts `file_path`
 2. Skips non-TS files and `zenstack/generated/` files
-3. Runs `yarn lint` on the project
+3. Runs `bun run lint` on the project
 4. Surfaces errors to stderr so Claude sees them immediately
 
 ---
@@ -113,7 +113,7 @@ Shell script that:
    - **Edge cases**: Include at least one error path or boundary condition per test suite
    - **Isolation**: Unit tests must not depend on database or network; E2E tests use unique data (`Date.now()` suffixes)
    - **Readability**: Test names describe the behavior being verified
-4. Runs the tests: `yarn test:unit` for unit, `yarn test:e2e` for E2E
+4. Runs the tests: `bun run test:unit` for unit, `bun run test:e2e` for E2E
 5. If tests fail, analyzes failures and fixes them
 6. Reports coverage summary
 
@@ -132,13 +132,13 @@ Shell script that:
 **Workflow**:
 1. Read `zenstack/schema.zmodel` for patterns
 2. Design and add new model with access policies
-3. Run `make codegen && make db-push`
+3. Run `bun run db:generate && bun run db:migrate`
 4. Create `src/components/[entity]/[entity]-view.tsx` following `projects-view.tsx` pattern exactly (uses `useClientQueries(schema)`, RHF, DataTable, toast)
 5. Create/update dashboard page following `src/app/dashboard/page.tsx` pattern
 6. **Write unit tests** for any utility/helper functions created
 7. **Write E2E test** in `tests/e2e/[entity].spec.ts` following the `auth-and-projects.spec.ts` pattern — test the full CRUD flow: create, read, update status, delete
-8. Run `make typecheck && make lint`
-9. Run `yarn test:unit` to verify unit tests pass
+8. Run `bun run typecheck && bun run lint`
+9. Run `bun run test:unit` to verify unit tests pass
 10. Report what was created and test results
 
 ---
@@ -156,9 +156,9 @@ Simple workflow: `npx shadcn@latest add $ARGUMENTS`, verify file exists, check d
 **Invocation**: `/preflight`
 
 Sequential quality gates — stop on first failure, fix, retry:
-1. `yarn lint` — fix lint errors
-2. `yarn typecheck` — fix type errors (run `make codegen` first if generated type issues)
-3. `yarn test:unit` — run unit tests, fix failures
+1. `bun run lint` — fix lint errors
+2. `bun run typecheck` — fix type errors (run `bun run db:generate` first if generated type issues)
+3. `bun run test:unit` — run unit tests, fix failures
 4. Report summary with pass/fail counts
 
 ---

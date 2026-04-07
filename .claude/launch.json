@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "next-dev",
-      "runtimeExecutable": "make",
-      "runtimeArgs": ["dev"],
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "up"],
       "autoPort": true
     }
   ]

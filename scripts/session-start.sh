@@ -18,7 +18,7 @@ fi
 
 # Install deps if node_modules is missing
 if [ ! -d node_modules ]; then
-  yarn install --frozen-lockfile 2>/dev/null || true
+  bun install --frozen-lockfile 2>/dev/null || true
 fi
 
 # Run deferred migrations once (cloud-setup.sh cannot access Doppler during setup).
@@ -27,9 +27,9 @@ MIGRATION_MARKER="/tmp/.t3app-db-migrated"
 if [ ! -f "$MIGRATION_MARKER" ]; then
   if command -v doppler &>/dev/null && doppler secrets --only-names >/dev/null 2>&1; then
     _migrate_ok=true
-    doppler run -- yarn db:generate >/dev/null || { echo "WARNING: db:generate failed" >&2; _migrate_ok=false; }
-    doppler run -- yarn auth:migrate >/dev/null || { echo "WARNING: auth:migrate failed" >&2; _migrate_ok=false; }
-    doppler run -- yarn db:migrate >/dev/null || { echo "WARNING: db:migrate (migrate deploy) failed" >&2; _migrate_ok=false; }
+    doppler run -- bun run db:generate >/dev/null || { echo "WARNING: db:generate failed" >&2; _migrate_ok=false; }
+    doppler run -- bun run auth:migrate >/dev/null || { echo "WARNING: auth:migrate failed" >&2; _migrate_ok=false; }
+    doppler run -- bun run db:migrate >/dev/null || { echo "WARNING: db:migrate (migrate deploy) failed" >&2; _migrate_ok=false; }
     if $_migrate_ok; then touch "$MIGRATION_MARKER"; fi
   fi
 fi
@@ -46,7 +46,7 @@ if [ -d "$PW_CACHE" ] && [ -d node_modules/playwright-core ]; then
   if [ -n "$INSTALLED_CHROMIUM" ]; then
     INSTALLED_REV=$(basename "$INSTALLED_CHROMIUM" | sed 's/chromium-//')
     BROWSERS_JSON="$CLAUDE_PROJECT_DIR/node_modules/playwright-core/browsers.json"
-    NEEDED_REV=$(node -e "
+    NEEDED_REV=$(bun -e "
       const b = require('$BROWSERS_JSON');
       const c = b.browsers.find(x => x.name === 'chromium');
       console.log(c ? c.revision : '');

@@ -9,7 +9,7 @@ on:
     paths:
       - '.claude/docker/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'bun.lock'
   workflow_dispatch: # manual trigger for first build or force rebuild
 
 env:

@@ -45,7 +45,7 @@ describe("myFunction", () => {
 });
 ```
 
-Run: `yarn test:unit`
+Run: `bun run test:unit`
 
 ## Convention: E2E Tests (Playwright)
 
@@ -69,7 +69,7 @@ test("user can [complete workflow description]", async ({ page }) => {
 });
 ```
 
-Run: `yarn test:e2e`
+Run: `bun run test:e2e`
 
 ## Strict Quality Rules
 
@@ -90,7 +90,7 @@ Run: `yarn test:e2e`
 
 ## Running Tests
 
-- Unit tests: `yarn test:unit`
-- E2E tests: `yarn test:e2e`
+- Unit tests: `bun run test:unit`
+- E2E tests: `bun run test:e2e`
 - If tests fail, analyze the failure, fix the test or the code, and re-run
 - Report final results with pass/fail counts

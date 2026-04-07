@@ -18,7 +18,7 @@ STEP 1 - REBASE:
 - If rebase conflicts occur, attempt to resolve them. If unresolvable, abort rebase (git rebase --abort), log a warning, and continue without rebasing.
 
 STEP 2 - FINAL VALIDATION:
-- Run: yarn lint && yarn typecheck && yarn test:unit
+- Run: bun run lint && bun run typecheck && bun run test:unit
 - If validation fails, attempt to fix the issues and re-run. If unfixable after reasonable attempts, output <<<RALPHEX:TASK_FAILED>>> — do NOT create a PR against a failing branch.
 
 STEP 3 - PUSH:
