@@ -3,8 +3,11 @@
   "configurations": [
     {
       "name": "next-dev",
-      "runtimeExecutable": "bun",
-      "runtimeArgs": ["run", "up"],
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=/opt/homebrew/bin:$HOME/.docker/bin:$PATH && export DOCKER_HOST=unix://$HOME/.docker/run/docker.sock && trap 'bun run down' INT TERM EXIT && bun run up && bun run logs & wait"
+      ],
       "autoPort": true
     }
   ]
