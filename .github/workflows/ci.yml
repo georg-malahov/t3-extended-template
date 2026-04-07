@@ -87,13 +87,10 @@ jobs:
 
       - name: Pull dev image from GHCR
         id: pull
-        run: |
-          docker pull $IMAGE
-          # Verify the image has bun (may be stale from pre-migration)
-          docker run --rm $IMAGE bun --version
+        run: docker pull $IMAGE
         continue-on-error: true
 
-      - name: Build dev image (fallback if GHCR image missing or stale)
+      - name: Build dev image (fallback if GHCR image not available)
         if: steps.pull.outcome == 'failure'
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
