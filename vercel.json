@@ -3,5 +3,5 @@
   "framework": "nextjs",
   "buildCommand": "bun run db:generate && bun run db:ensure-auth-schema && bun run auth:migrate && bun run db:migrate && bun run build",
   "installCommand": "bun install --frozen-lockfile",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':!docs' ':!*.md' ':!.claude' ':!.ralphex' ':!.cursor' ':!.github/CODEOWNERS' ':!bin' ':!scripts/cloud-setup.sh' ':!scripts/seed.ts' ':!scripts/session-start.sh' ':!.env.example' ':!LICENSE'"
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src/ zenstack/ public/ package.json bun.lock vercel.json '*.config.*' tsconfig.json proxy.ts scripts/postinstall.ts scripts/ensure-auth-schema.ts"
 }
