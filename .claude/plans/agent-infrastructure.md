@@ -27,7 +27,7 @@ The project is a production-ready T3 SaaS template with schema-driven developmen
 
 **Remove** (not needed during coding): Prerequisites, first-time setup, Doppler config details, deployment/Coolify sections, CI/CD pipeline details (already in `.github/workflows/`), env var table (already in `src/lib/env.ts`), Docker rationale, extending the template, common tasks, performance notes, security notes, migration path, resources, support.
 
-**Keep** (condensed): Tech stack (flat list), schema-driven flow diagram, DB schema separation, auth flow, data model summary with policy patterns, key files list, Makefile targets, critical codegen workflow, new entity pattern, code patterns (server component, client component, form), testing patterns (unit + E2E), critical gotchas, testing commands.
+**Keep** (condensed): Tech stack (flat list), schema-driven flow diagram, DB schema separation, auth flow, data model summary with policy patterns, key files list, commands, critical codegen workflow, new entity pattern, code patterns (server component, client component, form), testing patterns (unit + E2E), critical gotchas, testing commands.
 
 **Reference patterns from actual code:**
 - Server component: `requireSession()` → `sessionToDbAuth(session)` → `bindDbAuth(authContext)` (from `src/app/dashboard/page.tsx`)
