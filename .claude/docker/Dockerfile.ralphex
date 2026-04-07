@@ -6,13 +6,20 @@
 # into a Debian base where Playwright's Chromium works natively.
 #
 # Build:  docker build -t t3-template-ralphex -f .claude/docker/Dockerfile.ralphex .
-# Usage:  RALPHEX_IMAGE=t3-template-ralphex make ralphex-dk PLAN=docs/plans/xxx.md
+# Usage:  RALPHEX_IMAGE=t3-template-ralphex bin/ralphex-dk docs/plans/xxx.md
 
 # --- Stage 1: extract binaries from official ralphex image ---
 FROM ghcr.io/umputun/ralphex:latest AS ralphex-src
 
-# --- Stage 2: Debian-based image with full dev toolchain ---
+# --- Stage 2: get bun binary ---
+FROM oven/bun:1-debian AS bun-src
+
+# --- Stage 3: Debian-based image with full dev toolchain ---
 FROM node:24-bookworm-slim
+
+# Install bun (primary package manager — node stays available for tools that need it)
+COPY --from=bun-src /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -sf /usr/local/bin/bun /usr/local/bin/bunx
 
 # System deps: git, make, PostgreSQL, su-exec, dbus (for Chromium)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,11 +49,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get update && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
-# Yarn (classic v1)
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
-
 # Playwright Chromium with all system deps (install to shared path)
-RUN PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium \
+RUN PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers bunx playwright install --with-deps chromium \
     && chmod -R o+rx /opt/pw-browsers
 
 # Copy ralphex binary + Claude Code + init system from the official image
@@ -115,15 +119,17 @@ ENV TEST_USER_EMAIL="testuser@localhost"
 ENV TEST_USER_PASSWORD="testpassword"
 ENV TEST_USER_NAME="Test User"
 
-# Ensure node_modules/.bin is in PATH for all processes (docker exec, yarn scripts, etc.)
+# Ensure node_modules/.bin is in PATH for all processes (docker exec, bun scripts, etc.)
 ENV PATH=/workspace/node_modules/.bin:$PATH
 
-# Pre-install node_modules (rebuild image on package changes: make ralphex-build)
+# Pre-install node_modules (rebuild image on package changes: bun run image:build)
 # Install at /workspace so .bin symlinks resolve correctly at runtime
-COPY package.json yarn.lock /workspace/
-RUN cd /workspace && yarn install --frozen-lockfile \
+COPY package.json bun.lock /workspace/
+COPY scripts/postinstall.ts /workspace/scripts/postinstall.ts
+RUN cd /workspace && bun install --frozen-lockfile \
+    && touch /workspace/node_modules/.bun-installed \
     && mv /workspace/node_modules /prebuilt_node_modules \
-    && rm -f /workspace/package.json /workspace/yarn.lock \
+    && rm -f /workspace/package.json /workspace/bun.lock \
     && chown -R app:app /prebuilt_node_modules
 
 # Append custom init steps to the official init script

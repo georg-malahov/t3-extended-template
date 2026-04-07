@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Thin wrapper: runs ralphex in Docker sandbox (custom image with PostgreSQL, MinIO,
 # Doppler CLI, GitHub CLI, and Playwright Chromium).
-# All args passed through. Requires: make ralphex-build (first time only).
+# All args passed through. Requires: bun run image:build (first time only).
 # Usage: bin/ralphex-dk docs/plans/feature.md -s -p 8080
 # Docs:  https://ralphex.com/docs/#usage
 
@@ -10,14 +10,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! docker image inspect t3-template-ralphex >/dev/null 2>&1; then
-  echo "Image t3-template-ralphex not found. Run 'make ralphex-build' first." >&2
+  echo "Image t3-template-ralphex not found. Run 'bun run image:build' first." >&2
   exit 1
 fi
 
 # Mount a per-worktree named volume over node_modules so prebuilt (Linux) modules
 # don't overwrite host (macOS) node_modules through the workspace bind mount.
 # The init script populates this volume from /prebuilt_node_modules on each run.
-# Using a per-worktree name (matching `make dev` convention) avoids conflicts when
+# Using a per-worktree name (matching `bun run up` convention) avoids conflicts when
 # multiple worktrees run ralphex-dk simultaneously.
 NM_VOLUME="t3app-$(basename "$SCRIPT_DIR" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]/-/g')-nm"
 export RALPHEX_EXTRA_VOLUMES="${RALPHEX_EXTRA_VOLUMES:+${RALPHEX_EXTRA_VOLUMES},}${NM_VOLUME}:/workspace/node_modules"

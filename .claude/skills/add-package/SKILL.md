@@ -1,6 +1,6 @@
 ---
 name: add-package
-description: Add a yarn package dependency to the project.
+description: Add a bun package dependency to the project.
 disable-model-invocation: true
 argument-hint: "[package-name] - e.g., zod, lodash, or -D eslint-plugin-foo"
 ---
@@ -11,7 +11,7 @@ argument-hint: "[package-name] - e.g., zod, lodash, or -D eslint-plugin-foo"
 
 Run:
 ```bash
-yarn add $ARGUMENTS
+bun add $ARGUMENTS
 ```
 
 Use `-D` flag for dev dependencies (e.g., `/add-package -D @types/foo`).
@@ -24,7 +24,7 @@ Confirm the package appears in `package.json` under `dependencies` or `devDepend
 
 Run:
 ```bash
-yarn typecheck
+bun run typecheck
 ```
 
 Fix any type errors introduced by the new package.

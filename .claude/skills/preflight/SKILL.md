@@ -11,36 +11,36 @@ Run all quality gates in sequence. Stop on first failure, fix, and retry.
 ## Step 1: Lint
 
 ```bash
-yarn lint
+bun run lint
 ```
 
 If errors found:
 - Fix the lint issues in the source files
-- Re-run `yarn lint` to confirm fixes
+- Re-run `bun run lint` to confirm fixes
 
 Note: Generated files in `src/lib/zenstack/generated/` are excluded from ESLint.
 
 ## Step 2: Type Check
 
 ```bash
-yarn typecheck
+bun run typecheck
 ```
 
 If errors found:
-- If errors reference generated types, run `make codegen` first, then re-check
+- If errors reference generated types, run `bun run db:generate` first, then re-check
 - Fix type issues in source files
-- Re-run `yarn typecheck` to confirm
+- Re-run `bun run typecheck` to confirm
 
 ## Step 3: Unit Tests
 
 ```bash
-yarn test:unit
+bun run test:unit
 ```
 
 If failures found:
 - Investigate failing test(s)
 - Fix the code or the test as appropriate
-- Re-run `yarn test:unit` to confirm
+- Re-run `bun run test:unit` to confirm
 
 ## Summary
 

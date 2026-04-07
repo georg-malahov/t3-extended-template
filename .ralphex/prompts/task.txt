@@ -32,9 +32,9 @@ STEP 1 - IMPLEMENT:
 - Write tests for the implementation
 
 STEP 2 - VALIDATE:
-- For this project use: yarn lint && yarn typecheck && yarn test:unit
-- IMPORTANT: Do NOT use `make` commands for validation — `make` wraps commands in `docker exec` which fails inside the ralphex-dk container. Always use `yarn` directly.
-- E2E validation: yarn test:e2e (Playwright auto-starts yarn dev on demand via webServer config — no need for make dev). When debugging specific test failures, run only the affected files first: `yarn test:e2e tests/e2e/specific.spec.ts` — this is much faster than running all tests. Run the full suite only for final validation.
+- For this project use: bun run lint && bun run typecheck && bun run test:unit
+- IMPORTANT: Always use `bun run` directly for validation.
+- E2E validation: bun run test:e2e (Playwright auto-starts bun run dev on demand via webServer config). When debugging specific test failures, run only the affected files first: `bun run test:e2e tests/e2e/specific.spec.ts` — this is much faster than running all tests. Run the full suite only for final validation.
 - When E2E tests fail, read the extended trace to understand the failure: check `test-results/<test-name>/error-context.md` for page snapshots and DOM state. Do NOT rely solely on stdout error messages — they often lack context. Look at what the page actually rendered and what network requests were made.
 - Fix any failures, repeat until all validation passes
 
@@ -64,8 +64,8 @@ OUTPUT FORMAT: No markdown formatting (no **bold**, `code`, # headers). Plain te
 
 ## Stack-Specific Rules for T3 Extended SaaS Template
 
-- node_modules are prebuilt in the Docker image. If you see module-not-found or resolution errors (e.g. after package.json changes), run: yarn install --frozen-lockfile
-- After ANY change to zenstack/schema.zmodel, run yarn db:generate && yarn db:migrate BEFORE touching frontend
+- node_modules are prebuilt in the Docker image. If you see module-not-found or resolution errors (e.g. after package.json changes), run: bun install --frozen-lockfile
+- After ANY change to zenstack/schema.zmodel, run bun run db:generate && bun run db:migrate BEFORE touching frontend
 - Client components: useClientQueries(schema) from @zenstackhq/tanstack-query/react, import schema from @/lib/zenstack/generated/schema-lite (NOT schema.ts)
 - Server components: requireSession() -> sessionToDbAuth() -> bindDbAuth() chain is mandatory
 - Never edit src/lib/zenstack/generated/ — regenerate instead

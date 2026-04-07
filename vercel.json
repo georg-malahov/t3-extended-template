@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "yarn db:generate && yarn db:ensure-auth-schema && yarn auth:migrate && yarn db:migrate && yarn build",
-  "installCommand": "yarn install --frozen-lockfile --ignore-engines",
+  "buildCommand": "bun run db:generate && bun run db:ensure-auth-schema && bun run auth:migrate && bun run db:migrate && bun run build",
+  "installCommand": "bun install --frozen-lockfile",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':!docs' ':!*.md' ':!.claude' ':!.ralphex' ':!.cursor' ':!.github/CODEOWNERS' ':!bin' ':!scripts/cloud-setup.sh' ':!scripts/seed.ts' ':!scripts/session-start.sh' ':!.env.example' ':!LICENSE'"
 }

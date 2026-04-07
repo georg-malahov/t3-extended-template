@@ -32,7 +32,7 @@ on:
 # CI pulls it (~90s) instead of building from scratch (~10min).
 
 jobs:
-  # ── Fast checks: native Node.js, no Docker ───────────────────────────────
+  # ── Fast checks: native Bun, no Docker ───────────────────────────────
   checks:
     runs-on: ubuntu-latest
     permissions:
@@ -41,25 +41,22 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: yarn
+      - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-engines
+        run: bun install --frozen-lockfile
 
       - name: Generate types
-        run: yarn db:generate
+        run: bun run db:generate
 
       - name: Lint
-        run: yarn lint
+        run: bun run lint
 
       - name: Typecheck
-        run: yarn typecheck
+        run: bun run typecheck
 
       - name: Unit tests
-        run: yarn test:unit
+        run: bun run test:unit
 
   # ── E2E tests: 4 shards, each with its own container ─────────────────────
   e2e:
@@ -90,10 +87,13 @@ jobs:
 
       - name: Pull dev image from GHCR
         id: pull
-        run: docker pull $IMAGE
+        run: |
+          docker pull $IMAGE
+          # Verify the image has bun (may be stale from pre-migration)
+          docker run --rm $IMAGE bun --version
         continue-on-error: true
 
-      - name: Build dev image (fallback if GHCR image not available)
+      - name: Build dev image (fallback if GHCR image missing or stale)
         if: steps.pull.outcome == 'failure'
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
@@ -141,12 +141,12 @@ jobs:
 
       - name: Run codegen and migrations
         run: |
-          docker exec $CONTAINER yarn db:generate
-          docker exec $CONTAINER yarn auth:migrate
-          docker exec $CONTAINER yarn db:migrate
+          docker exec $CONTAINER bun run db:generate
+          docker exec $CONTAINER bun run auth:migrate
+          docker exec $CONTAINER bun run db:migrate
 
       - name: Start dev server
-        run: docker exec -d $CONTAINER yarn dev --hostname 0.0.0.0 --port 3000
+        run: docker exec -d $CONTAINER bun run dev -- --hostname 0.0.0.0 --port 3000
 
       - name: Wait for app to be ready
         run: |
@@ -163,7 +163,7 @@ jobs:
           exit 1
 
       - name: E2E tests (shard ${{ matrix.shard }}/4)
-        run: docker exec -e CI=true $CONTAINER yarn test:e2e --shard=${{ matrix.shard }}/4
+        run: docker exec -e CI=true $CONTAINER bun run test:e2e -- --shard=${{ matrix.shard }}/4
 
       - name: Upload blob report
         if: always()
@@ -199,13 +199,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: yarn
+      - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-engines
+        run: bun install --frozen-lockfile
 
       - name: Download all blob reports
         uses: actions/download-artifact@v5
@@ -216,7 +213,7 @@ jobs:
 
       - name: Merge reports
         if: hashFiles('all-blob-reports/**') != ''
-        run: npx playwright merge-reports --reporter=html,json ./all-blob-reports
+        run: bunx playwright merge-reports --reporter=html,json ./all-blob-reports
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
 

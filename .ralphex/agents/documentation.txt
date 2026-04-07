@@ -20,7 +20,7 @@ Check that new code is properly documented and aligned with project conventions.
 - Simple policies (`@@allow('read', auth() != null)`) do not need comments.
 
 ## CLAUDE.md Alignment
-- If a new Makefile target was added, it must be documented in the `## Makefile` section of `CLAUDE.md`.
+- If a new script was added to `package.json`, it must be documented in the `## Commands` section of `CLAUDE.md`.
 - If a new environment variable was added to `src/lib/env.ts`, `CLAUDE.md` should reference it (or at minimum, the `env.ts` file should have a comment explaining its purpose).
 - If a new key architectural file was introduced, consider whether it should be listed in `## Key Files`.
 

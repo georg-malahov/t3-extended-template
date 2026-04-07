@@ -9,13 +9,13 @@
 #   1. Installs Doppler CLI if missing
 #   2. Starts PostgreSQL and configures passwordless local TCP access
 #   3. Creates the "app" database and "auth" schema
-#   4. Installs yarn dependencies
+#   4. Installs bun dependencies
 #   5. Runs auth migrations and pushes the DB schema (requires Doppler)
 #   6. Bridges Playwright browser versions if the installed revision differs from what the project needs
 #   7. Installs ralphex CLI for autonomous multi-task execution
 #
 # Prerequisites:
-#   - Node.js 22+, yarn, PostgreSQL 16
+#   - Bun 1.x, PostgreSQL 16
 #   - DOPPLER_TOKEN env var (set in cloud environment settings, or via `doppler login` locally)
 
 set -euo pipefail
@@ -121,7 +121,7 @@ fi
 # 4. Dependencies
 # ---------------------------------------------------------------------------
 echo "==> [4/7] Installing dependencies..."
-yarn install --frozen-lockfile 2>&1 | tail -1
+bun install --frozen-lockfile 2>&1 | tail -1
 echo "    Done"
 
 # ---------------------------------------------------------------------------
@@ -149,7 +149,7 @@ if [ -d "$PW_CACHE" ]; then
   if [ -n "$INSTALLED_CHROMIUM" ]; then
     INSTALLED_REV=$(basename "$INSTALLED_CHROMIUM" | sed 's/chromium-//')
     BROWSERS_JSON="$PROJECT_DIR/node_modules/playwright-core/browsers.json"
-    NEEDED_REV=$(node -e "
+    NEEDED_REV=$(bun -e "
       const b = require('$BROWSERS_JSON');
       const c = b.browsers.find(x => x.name === 'chromium');
       console.log(c ? c.revision : '');
@@ -189,8 +189,8 @@ if [ -d "$PW_CACHE" ]; then
   fi
 else
   # No pre-installed browsers — try to download (needs network)
-  yarn playwright install chromium 2>/dev/null && echo "    Chromium installed" \
-    || echo "    No browsers found. Run: yarn playwright install chromium"
+  bunx playwright install chromium 2>/dev/null && echo "    Chromium installed" \
+    || echo "    No browsers found. Run: bunx playwright install chromium"
 fi
 
 # ---------------------------------------------------------------------------
@@ -248,9 +248,9 @@ fi
 
 echo ""
 echo "=== Environment ready ==="
-echo "    make dev          # start dev server"
-echo "    make test-e2e     # run E2E tests"
-echo "    make test-unit    # run unit tests"
-echo "    make lint         # run linter"
-echo "    make typecheck    # run type checker"
+echo "    bun run up        # start dev server"
+echo "    bun run test:e2e  # run E2E tests"
+echo "    bun run test:unit # run unit tests"
+echo "    bun run lint      # run linter"
+echo "    bun run typecheck # run type checker"
 echo "    bin/ralphex       # autonomous multi-task execution"

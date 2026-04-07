@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
 
-// TRACE_ALL=1 make test-e2e  →  capture traces for all tests (not just failures)
+// TRACE_ALL=1 bun run test:e2e  →  capture traces for all tests (not just failures)
 const traceAll = !!process.env.TRACE_ALL;
 
 export default defineConfig({
@@ -30,7 +30,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "yarn dev",
+    command: "bun run dev",
     url: baseURL,
     reuseExistingServer: true,
     timeout: 120_000,

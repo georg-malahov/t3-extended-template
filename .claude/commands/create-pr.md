@@ -40,7 +40,7 @@ Run these in parallel:
 Generate a SPECIFIC test plan based on the actual changes:
 - Read the diff stat and commit messages to understand what was changed
 - Write 3-6 checkbox items describing concrete verification steps
-- Each item must be actionable (e.g., "Run make dev and verify the container starts with all services")
+- Each item must be actionable (e.g., "Run bun run up and verify the container starts with all services")
 - Do NOT use generic items like "All unit tests pass" — those are enforced by CI
 - Focus on manual verification, behavioral checks, and integration testing specific to the changes
 

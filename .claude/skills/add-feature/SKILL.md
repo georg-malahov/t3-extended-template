@@ -27,7 +27,7 @@ Add the model to `zenstack/schema.zmodel`.
 
 Run:
 ```bash
-make codegen && make db-push
+bun run db:generate && bun run db:migrate
 ```
 
 If errors occur, fix the schema and retry.
@@ -84,7 +84,7 @@ For any utility/helper functions created, add co-located `*.test.ts` files follo
 
 Run all quality checks:
 ```bash
-make typecheck && make lint && yarn test:unit
+bun run typecheck && bun run lint && bun run test:unit
 ```
 
 Report what was created and test results.

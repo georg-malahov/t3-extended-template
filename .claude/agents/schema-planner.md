@@ -37,4 +37,4 @@ Provide:
 1. The complete model block(s) ready to paste into `schema.zmodel`
 2. Any new enum definitions needed
 3. Any changes needed to existing models (new relation fields)
-4. Reminder: `make codegen && make db-push` after adding the model
+4. Reminder: `bun run db:generate && bun run db:migrate` after adding the model

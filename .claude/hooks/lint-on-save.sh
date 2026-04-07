@@ -22,9 +22,9 @@ fi
 
 # Run lint if the file exists
 if [[ -f "$FILE_PATH" ]]; then
-  RESULT=$(yarn lint 2>&1) || true
+  RESULT=$(bun run lint 2>&1) || true
   if echo "$RESULT" | grep -q "error"; then
-    echo "ESLint errors detected. Run 'yarn lint' to see details." >&2
+    echo "ESLint errors detected. Run 'bun run lint' to see details." >&2
   fi
 fi
 
