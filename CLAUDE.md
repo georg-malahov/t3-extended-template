@@ -23,6 +23,32 @@ bun run down         # stop the container
 
 Each worktree gets its own container name, node_modules volume, and auto-assigned port — multiple worktrees can run `bun run up` simultaneously.
 
+### Remote-control Claude Code sessions
+
+`bun run remote-control` boots a throwaway `t3-template-ralphex` container whose only job is to run `claude remote-control`, so the current repo is reachable from claude.ai/code and the Claude mobile app. Mounts, credentials, and Doppler/GH tokens are reused from the same ralphex-dk machinery as `bin/ralphex-dk`.
+
+**Commands.**
+
+| Command | What it does |
+|---------|-------------|
+| `bun run remote-control` | Fresh throwaway container: start detached, tail logs until the `claude.ai/code?environment=...` URL appears, print it, return. Container runs in the background. Fail-fast if one is already running. |
+| `bun run remote-control --stop` | `docker stop` the container. Because `--rm` is on by default, Docker auto-removes it and everything inside the writable layer is gone. |
+| `bun run remote-control --logs` | `docker logs -f` the running container. |
+
+**Design: completely stateless.** Every invocation is a fresh container. Every `--stop` destroys it. The only persistent surface is `/workspace` → host repo, which is already bind-mounted — so files you create during the session survive. Anything else (claude session JSONL history, shell snapshots, caches) is ephemeral and goes away with the container. If you want to preserve conversation context across restarts, **summarize it into a file under `/workspace`** before stopping; you can re-feed it into the next session as a starting prompt. There is currently no "resume the previous bridge URL" mechanism — the `claude remote-control` CLI has no `--resume` flag, and spawned bridge sessions always start fresh.
+
+**Container name.** Deterministic: `t3-remote-<worktree>`, where `<worktree>` is the sanitized repo folder name. So multiple worktrees each get their own remote-control session, and the outer (parent) claude session running outside the container can always target the child by name.
+
+**Three non-obvious things the script does to make Remote Control work inside Docker at all.** If you ever touch this, know that each of these was discovered the hard way:
+
+1. **Stages a patched `~/.claude.json` in `$TMPDIR`** and mounts it to `/home/app/.claude/.claude.json`. Claude Remote Control reads `accountUuid` / `organizationUuid` / `claudeMaxTier` from that file (not from `.credentials.json`) and without it aborts with *"Unable to determine your organization for Remote Control eligibility."* The staged copy also injects a `projects["/workspace"].hasTrustDialogAccepted = true` entry, because workspace trust is keyed on absolute cwd and the container cwd (`/workspace`) differs from the host repo path — without the injection, claude refuses with *"Workspace not trusted."* Using a staged copy (rather than bind-mounting the real host file) prevents the container from mutating user host state.
+2. **Runs `docker run -dt`** — detached **with** pseudo-TTY. Without `-t`, claude's bridge handshake times out after 15 s during `POST /v1/environments/bridge` because the remote-control UI rendering path waits on TTY I/O primitives.
+3. **Passes `--spawn same-dir`** to `claude remote-control`. Without it, the CLI blocks on an interactive `1=same-dir / 2=worktree` prompt that has no stdin to read from, and the container hangs without printing the session URL.
+
+**Where session content lives (and what happens on stop).** The child's full conversation is persisted inside the container at `/home/app/.claude/projects/-workspace/<uuid>.jsonl` plus `subagents/*.jsonl` and `tool-results/*.txt`. None of those paths are bind-mounted, so `docker stop` + auto-remove wipes them. The parent (outer) claude session never sees this content unless it explicitly `docker exec`s into the container while it's alive — tailing `docker logs` only exposes bridge UI (spinner, connection status, URL), not prompts or responses.
+
+**Typical split-brain workflow.** Run `claude remote-control` on the host as the **parent**, without `GH_TOKEN`. From that parent, run `bun run remote-control` to spawn a **child** inside the container for unrestricted code work. When the child finishes, come back to the parent to push / open a PR — only the parent holds the GH credentials. The child runs with `--permission-mode bypassPermissions` (unrestricted) and inherits `DOPPLER_TOKEN` / `GH_TOKEN` from the caller only if they are set in the host env — same policy as `bin/ralphex-dk`.
+
 ### Secrets management with Doppler
 
 All environment variables are managed via **Doppler** (project configured in `doppler.yaml`).
@@ -141,6 +167,7 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 | `bun run dx bash` | Interactive bash shell inside the container |
 | `bun run dx <cmd>` | Run any command inside the container |
 | `bun run image:build` | Build the t3-template-ralphex Docker image |
+| `bun run remote-control` | Spin up the ralphex image as a detached Claude Code remote-control session; see "Remote-control Claude Code sessions" above |
 
 **Direct commands** — run on host or inside container:
 

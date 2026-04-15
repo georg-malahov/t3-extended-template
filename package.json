@@ -27,6 +27,7 @@
     "dx": "bun run scripts/dx.ts",
     "logs": "bun run scripts/docker-logs.ts",
     "image:build": "bun run scripts/docker-build.ts",
+    "remote-control": "bun run scripts/remote-control.ts",
     "test:e2e:report": "bunx playwright show-report"
   },
   "dependencies": {
