@@ -189,6 +189,12 @@ tokens.pop();
 // out after 15 s if stdout is not a TTY, so -t is mandatory even in -d mode.
 // --spawn same-dir skips claude's interactive "1=same-dir / 2=worktree" prompt.
 tokens.splice(2, 0, '-dt', '--name', CONTAINER);
+// Suffix the session name with "(docker)" so a child spawned from inside
+// a host-side parent `claude remote-control` (which defaults its session
+// name to cwd basename) shows up in the claude.ai/code list as visually
+// distinct from the parent. Without this, parent and child end up with
+// identical display names and are indistinguishable on mobile.
+const sessionDisplayName = `${path.basename(ROOT)} (docker)`;
 tokens.push(
   'claude',
   'remote-control',
@@ -197,7 +203,7 @@ tokens.push(
   '--spawn',
   'same-dir',
   '--name',
-  path.basename(ROOT),
+  sessionDisplayName,
 );
 
 log(`container: ${CONTAINER}`);
