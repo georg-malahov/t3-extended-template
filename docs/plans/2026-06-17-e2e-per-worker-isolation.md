@@ -95,9 +95,9 @@ edits described per task. **The final task deletes that reference directory.**
 - [x] Lean validation. Confirm the new spec-balance tests actually execute (vitest output lists them) and pass.
 
 ### Task 2: isolated runner + arg-parser unit tests
-- [ ] Create `scripts/test-e2e.ts` — copy `docs/plans/reference/e2e-isolation/test-e2e.ts.txt` **verbatim** (already template-adapted: no `SITE_GATE_ENABLED`, imports `getContainerName`/`isContainerRunning`/`sleep` from `./container` and the spec-balance helpers).
-- [ ] Create `scripts/test-e2e.test.ts` — copy `test-e2e.test.ts.txt` **verbatim** (covers the pure `parseRunnerArgs`; `import.meta.main` is falsy under vitest so importing the runner does NOT trigger orchestration).
-- [ ] Lean validation. `parseRunnerArgs` tests run green; `typecheck` clean.
+- [x] Create `scripts/test-e2e.ts` — copy `docs/plans/reference/e2e-isolation/test-e2e.ts.txt` **verbatim** (already template-adapted: no `SITE_GATE_ENABLED`, imports `getContainerName`/`isContainerRunning`/`sleep` from `./container` and the spec-balance helpers).
+- [x] Create `scripts/test-e2e.test.ts` — copy `test-e2e.test.ts.txt` **verbatim** (covers the pure `parseRunnerArgs`; `import.meta.main` is falsy under vitest so importing the runner does NOT trigger orchestration).
+- [x] Lean validation. `parseRunnerArgs` tests run green; `typecheck` clean.
 
 ### Task 3: Playwright config + global-setup + package.json wiring
 - [ ] Replace `playwright.config.ts` with `docs/plans/reference/e2e-isolation/playwright.config.ts.txt` (single `chromium` project, `testMatch: "**/*.spec.ts"`, `retries: Number(process.env.E2E_RETRIES ?? 0)`, `webServer` undefined when `PLAYWRIGHT_PROD_SERVER === "1"` else the existing `bun run dev` block).
