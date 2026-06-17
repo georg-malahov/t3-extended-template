@@ -178,12 +178,12 @@ edits described per task. **The final task deletes that reference directory.**
 - [x] Lean validation (YAML well-formed; `bun run lint`/`typecheck`/`test:unit` still green).
 
 ### Task 7: documentation — CLAUDE.md discipline & anti-patterns
-- [ ] In `CLAUDE.md` "## Commands" → "Direct commands" table: change the `test:e2e`
+- [x] In `CLAUDE.md` "## Commands" → "Direct commands" table: change the `test:e2e`
       row to "E2E (prod) — N isolated workers (own DB + `next start` each)"; add
       rows for `test:e2e:dev` ("E2E (dev) — `playwright test --workers=1` vs `next
       dev`, no build") and `test:e2e:pw` ("Raw Playwright passthrough; expert
       escape hatch").
-- [ ] In "## Testing" → "### E2E Tests (Playwright)": replace the "(Playwright
+- [x] In "## Testing" → "### E2E Tests (Playwright)": replace the "(Playwright
       auto-starts dev server)" wording and add:
   - A short **per-worker isolation runner** paragraph (N isolated workers, own DB
     clone + `next start` each, `retries=0` on a prod build; flags `--workers=N`,
@@ -191,7 +191,7 @@ edits described per task. **The final task deletes that reference directory.**
     `E2E_BASE_PORT`/`E2E_RETRIES`).
   - A **two run modes** note: Prod (`bun run test:e2e`, canonical) vs Dev
     (`bun run test:e2e:dev [spec]`, no build, serial).
-- [ ] Add a new subsection **"### E2E discipline & anti-patterns (retries=0 — flakes are bugs)"** with these 8 rules (template-adapted; drop barwa's German/`SiteImage` examples):
+- [x] Add a new subsection **"### E2E discipline & anti-patterns (retries=0 — flakes are bugs)"** with these 8 rules (template-adapted; drop barwa's German/`SiteImage` examples):
   1. **No fixed-time waits.** Never `page.waitForTimeout`, `networkidle`, or `waitForLoadState`. Use auto-waiting assertions (`toBeVisible`, `toHaveURL`). A synchronous read (`page.url()`) gets an auto-waiting assertion in front of it, never a sleep.
   2. **Specific locators.** A bare `getByText(...)` / `input[type=file]` breaks strict-mode the moment a second match appears. Scope to a role/testid/parent.
   3. **Prefer unique per-test data; clean up shared state you mutate.** Specs on the same worker share that worker's DB serially. Each test should create its own user/org (as `signUpAndLogin` does). If a spec mutates a shared/singleton row, restore it in `afterAll`.
@@ -200,8 +200,8 @@ edits described per task. **The final task deletes that reference directory.**
   6. **Prod-vs-dev divergences are real.** Things off in `next dev` are ON under `next start` (`NODE_ENV=production`): Better Auth **rate limiting** (gated off in `auth.ts` only when `E2E=1`, which the runner/CI set). A login-heavy flake only in prod → suspect rate limiting first.
   7. **Match current app behavior, not stale assumptions.** E2E drifts when not run; verify routes/labels/default views against the source before asserting.
   8. **No long per-assertion timeouts to mask races.** A `{ timeout: 30000 }` makes a real failure take 30s. Fix the underlying race and keep timeouts tight so failures are quick.
-- [ ] In "## Environment variables reference": add `E2E` (runtime flag — disables Better Auth rate limiting; set by runner/CI), `E2E_WORKERS`, `E2E_BASE_PORT`, `E2E_RETRIES`, `E2E_SKIP_BUILD`, `E2E_RECORD_DURATIONS`, `E2E_NO_BALANCE`. Mark all "no" (runtime-only, not in `env.ts`).
-- [ ] Lean validation.
+- [x] In "## Environment variables reference": add `E2E` (runtime flag — disables Better Auth rate limiting; set by runner/CI), `E2E_WORKERS`, `E2E_BASE_PORT`, `E2E_RETRIES`, `E2E_SKIP_BUILD`, `E2E_RECORD_DURATIONS`, `E2E_NO_BALANCE`. Mark all "no" (runtime-only, not in `env.ts`).
+- [x] Lean validation.
 
 ### Task 8: MANUAL validation (operator — NOT ralph) + cleanup
 > Ralph stops after Task 7. The steps below require a live container and real E2E
