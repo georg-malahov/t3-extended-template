@@ -113,7 +113,7 @@ edits described per task. **The final task deletes that reference directory.**
 - [x] Lean validation.
 
 ### Task 4: prod-mode enablers — auth gating + hydration helper + spec retrofit
-- [ ] Edit `src/lib/auth.ts`: insert directly after the `experimental: { joins: true },` block:
+- [x] Edit `src/lib/auth.ts`: insert directly after the `experimental: { joins: true },` block:
       ```ts
       // Better Auth enables rate limiting by default under NODE_ENV=production. The
       // E2E suite runs against a production build (`next start`) and signs in many
@@ -124,8 +124,8 @@ edits described per task. **The final task deletes that reference directory.**
         enabled: process.env.E2E !== "1",
       },
       ```
-- [ ] Replace `tests/e2e/helpers/auth.ts` with `docs/plans/reference/e2e-isolation/helpers-auth.ts.txt` (adds private `submitUntilLeave`, exported `submitSignIn`, and makes `signUpAndLogin` hydration-robust; keeps the `{ email, name, password }` return shape used by both specs).
-- [ ] Retrofit `tests/e2e/auth.spec.ts` (surgical):
+- [x] Replace `tests/e2e/helpers/auth.ts` with `docs/plans/reference/e2e-isolation/helpers-auth.ts.txt` (adds private `submitUntilLeave`, exported `submitSignIn`, and makes `signUpAndLogin` hydration-robust; keeps the `{ email, name, password }` return shape used by both specs).
+- [x] Retrofit `tests/e2e/auth.spec.ts` (surgical):
   - Add `import { submitSignIn } from "./helpers/auth";` (alongside the existing `signUpAndLogin` import).
   - In the **"sign-in with existing credentials reaches dashboard"** test, replace
     `await page.getByRole("button", { name: "Sign in" }).click();` with
@@ -141,11 +141,11 @@ edits described per task. **The final task deletes that reference directory.**
     ```
     then keep the existing `toContainText(/invalid|incorrect|wrong|error/i)` assertion.
   - Leave the "unauthenticated /dashboard redirect" test unchanged (no click).
-- [ ] Do NOT pre-emptively rewrite `projects.spec.ts` CRUD clicks — its auth goes
+- [x] Do NOT pre-emptively rewrite `projects.spec.ts` CRUD clicks — its auth goes
       through the now-robust `signUpAndLogin`. Any residual hydration/data race in
       its CRUD clicks is caught and fixed in Task 8 (operator) with the same
       `toPass` pattern (ralph can't verify E2E behavior).
-- [ ] Lean validation.
+- [x] Lean validation.
 
 ### Task 5: direct-DB test helpers
 - [ ] Create `tests/e2e/helpers/db-url.ts` — copy `db-url.ts.txt` **verbatim** (exports `E2E_DATABASE_URL = process.env.DATABASE_URL ?? "postgresql://postgres@localhost/app"`).
