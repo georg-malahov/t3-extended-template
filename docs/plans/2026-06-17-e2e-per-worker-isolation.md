@@ -87,12 +87,12 @@ edits described per task. **The final task deletes that reference directory.**
 ## Implementation Steps
 
 ### Task 1: spec-balance helper + unit tests + vitest include
-- [ ] Update `vitest.config.mts`: change `include` to
+- [x] Update `vitest.config.mts`: change `include` to
       `["src/**/*.test.ts", "src/**/*.test.tsx", "scripts/**/*.test.ts"]` so the
       new `scripts/*.test.ts` run under `test:unit`.
-- [ ] Create `scripts/spec-balance.ts` — copy `docs/plans/reference/e2e-isolation/spec-balance.ts.txt` **verbatim** (pure, app-agnostic: `parseSpecDurations`, `binPackByDuration`, `median`, `hasSpecFilter`, `extractShard`, `assignWorkerSpecs`).
-- [ ] Create `scripts/spec-balance.test.ts` — copy `spec-balance.test.ts.txt` **verbatim**.
-- [ ] Lean validation. Confirm the new spec-balance tests actually execute (vitest output lists them) and pass.
+- [x] Create `scripts/spec-balance.ts` — copy `docs/plans/reference/e2e-isolation/spec-balance.ts.txt` **verbatim** (pure, app-agnostic: `parseSpecDurations`, `binPackByDuration`, `median`, `hasSpecFilter`, `extractShard`, `assignWorkerSpecs`).
+- [x] Create `scripts/spec-balance.test.ts` — copy `spec-balance.test.ts.txt` **verbatim**.
+- [x] Lean validation. Confirm the new spec-balance tests actually execute (vitest output lists them) and pass.
 
 ### Task 2: isolated runner + arg-parser unit tests
 - [ ] Create `scripts/test-e2e.ts` — copy `docs/plans/reference/e2e-isolation/test-e2e.ts.txt` **verbatim** (already template-adapted: no `SITE_GATE_ENABLED`, imports `getContainerName`/`isContainerRunning`/`sleep` from `./container` and the spec-balance helpers).
