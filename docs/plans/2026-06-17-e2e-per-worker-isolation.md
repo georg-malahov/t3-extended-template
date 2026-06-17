@@ -148,12 +148,12 @@ edits described per task. **The final task deletes that reference directory.**
 - [x] Lean validation.
 
 ### Task 5: direct-DB test helpers
-- [ ] Create `tests/e2e/helpers/db-url.ts` — copy `db-url.ts.txt` **verbatim** (exports `E2E_DATABASE_URL = process.env.DATABASE_URL ?? "postgresql://postgres@localhost/app"`).
-- [ ] Create `tests/e2e/helpers/db-reset.ts` — copy `db-reset.ts.txt`. TRUNCATE lists are scoped to this template: public `"Project"`,`"Membership"`,`"Organization"`,`"User"` and auth `auth."session"`,`auth."account"`,`auth."verification"`,`auth."user"`. **Confirm the auth table names** against `bun run auth:generate` output / the live `auth` schema; adjust if they differ.
-- [ ] These helpers are infra for future specs that hit Postgres directly; no
+- [x] Create `tests/e2e/helpers/db-url.ts` — copy `db-url.ts.txt` **verbatim** (exports `E2E_DATABASE_URL = process.env.DATABASE_URL ?? "postgresql://postgres@localhost/app"`).
+- [x] Create `tests/e2e/helpers/db-reset.ts` — copy `db-reset.ts.txt`. TRUNCATE lists are scoped to this template: public `"Project"`,`"Membership"`,`"Organization"`,`"User"` and auth `auth."session"`,`auth."account"`,`auth."verification"`,`auth."user"`. **Confirm the auth table names** against `bun run auth:generate` output / the live `auth` schema; adjust if they differ.
+- [x] These helpers are infra for future specs that hit Postgres directly; no
       current spec imports them. If `lint` flags `db-reset.ts` as an unused module
       (default configs do NOT), prefer leaving it — do not delete it.
-- [ ] Lean validation (`typecheck` must see both files clean).
+- [x] Lean validation (`typecheck` must see both files clean).
 
 ### Task 6: CI — prod-server-per-shard
 - [ ] In `.github/workflows/ci.yml`, the `e2e` job:
