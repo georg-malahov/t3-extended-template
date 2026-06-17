@@ -144,4 +144,10 @@ describe("parseRunnerArgs", () => {
     expect(parsed.workers).toBeUndefined();
     expect(parsed.passthrough).toEqual(["tests/e2e/x.spec.ts"]);
   });
+
+  it("bad space-form --workers after a good equals-form one keeps prior value, bad token goes to passthrough", () => {
+    const parsed = parseRunnerArgs(["--workers=3", "--workers", "abc"]);
+    expect(parsed.workers).toBe(3);
+    expect(parsed.passthrough).toEqual(["abc"]);
+  });
 });

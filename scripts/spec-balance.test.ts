@@ -227,6 +227,14 @@ describe("extractShard", () => {
   it("returns null for trailing --shard with no value token", () => {
     expect(extractShard(["--retries=0", "--shard"])).toBeNull();
   });
+
+  it("last --shard wins when the flag appears twice", () => {
+    expect(extractShard(["--shard=1/4", "--shard=3/4"])).toEqual({ k: 3, n: 4, rest: [] });
+  });
+
+  it("accepts k === n (last shard)", () => {
+    expect(extractShard(["--shard=4/4"])).toEqual({ k: 4, n: 4, rest: [] });
+  });
 });
 
 // ── assignWorkerSpecs ─────────────────────────────────────────────────────────
@@ -283,5 +291,13 @@ describe("assignWorkerSpecs", () => {
     expect(result!).toHaveLength(2);
     expect(result![0]).toHaveLength(1);
     expect(result![1]).toHaveLength(1);
+  });
+
+  it("accepts specFiles.length === n (one spec per worker)", () => {
+    const specs = ["tests/e2e/auth.spec.ts", "tests/e2e/projects.spec.ts"];
+    const result = assignWorkerSpecs(specs, durations, 2);
+    expect(result).not.toBeNull();
+    expect(result!).toHaveLength(2);
+    result!.forEach((bin) => expect(bin).toHaveLength(1));
   });
 });

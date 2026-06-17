@@ -19,7 +19,7 @@ export function resetAppData() {
   // public schema (ZenStack models). CASCADE resolves FK order.
   const publicTables = ['"Project"', '"Membership"', '"Organization"', '"User"'];
   const publicSql = `TRUNCATE ${publicTables.join(", ")} CASCADE;`;
-  execSync(`psql ${E2E_DATABASE_URL} -c '${publicSql}'`, { stdio: "ignore" });
+  execSync(`psql "${E2E_DATABASE_URL}" -c '${publicSql}'`, { stdio: "ignore" });
 
   // auth schema (Better Auth core tables) — schema-qualified because
   // E2E_DATABASE_URL has no auth search_path. Names are Better Auth's defaults;
@@ -31,5 +31,5 @@ export function resetAppData() {
     'auth."user"',
   ];
   const authSql = `TRUNCATE ${authTables.join(", ")} CASCADE;`;
-  execSync(`psql ${E2E_DATABASE_URL} -c '${authSql}'`, { stdio: "ignore" });
+  execSync(`psql "${E2E_DATABASE_URL}" -c '${authSql}'`, { stdio: "ignore" });
 }
