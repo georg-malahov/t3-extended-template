@@ -100,8 +100,8 @@ edits described per task. **The final task deletes that reference directory.**
 - [x] Lean validation. `parseRunnerArgs` tests run green; `typecheck` clean.
 
 ### Task 3: Playwright config + global-setup + package.json wiring
-- [ ] Replace `playwright.config.ts` with `docs/plans/reference/e2e-isolation/playwright.config.ts.txt` (single `chromium` project, `testMatch: "**/*.spec.ts"`, `retries: Number(process.env.E2E_RETRIES ?? 0)`, `webServer` undefined when `PLAYWRIGHT_PROD_SERVER === "1"` else the existing `bun run dev` block).
-- [ ] Edit `tests/e2e/global-setup.ts`: add as the FIRST statement in `globalSetup`'s body:
+- [x] Replace `playwright.config.ts` with `docs/plans/reference/e2e-isolation/playwright.config.ts.txt` (single `chromium` project, `testMatch: "**/*.spec.ts"`, `retries: Number(process.env.E2E_RETRIES ?? 0)`, `webServer` undefined when `PLAYWRIGHT_PROD_SERVER === "1"` else the existing `bun run dev` block).
+- [x] Edit `tests/e2e/global-setup.ts`: add as the FIRST statement in `globalSetup`'s body:
       ```ts
       // The isolated runner (scripts/test-e2e.ts) and CI set PLAYWRIGHT_PROD_SERVER=1:
       // each worker's DB is cloned from a seeded template and `next start` needs no
@@ -109,8 +109,8 @@ edits described per task. **The final task deletes that reference directory.**
       if (process.env.PLAYWRIGHT_PROD_SERVER === "1") return;
       ```
       (Leave the existing route-warmup loop intact for the dev-server fallback path.)
-- [ ] Edit `package.json` scripts: `"test:e2e": "bun run scripts/test-e2e.ts"`; add `"test:e2e:dev": "playwright test --workers=1"` and `"test:e2e:pw": "playwright test"`. Keep `test:e2e:ui` and `test:e2e:report` as-is.
-- [ ] Lean validation.
+- [x] Edit `package.json` scripts: `"test:e2e": "bun run scripts/test-e2e.ts"`; add `"test:e2e:dev": "playwright test --workers=1"` and `"test:e2e:pw": "playwright test"`. Keep `test:e2e:ui` and `test:e2e:report` as-is.
+- [x] Lean validation.
 
 ### Task 4: prod-mode enablers — auth gating + hydration helper + spec retrofit
 - [ ] Edit `src/lib/auth.ts`: insert directly after the `experimental: { joins: true },` block:
