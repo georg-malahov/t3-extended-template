@@ -206,21 +206,13 @@ edits described per task. **The final task deletes that reference directory.**
 ### Task 8: MANUAL validation (operator — NOT ralph) + cleanup
 > Ralph stops after Task 7. The steps below require a live container and real E2E
 > runs (ralph's validation is lint+typecheck+test:unit only).
-- [ ] `bun run test:e2e --workers=1` — builds once, one worker, **retries=0**, green.
-- [ ] `bun run test:e2e` — default 4 workers, all shards green, retries=0.
-- [ ] Re-run `bun run test:e2e` once more to confirm stability (no intermittent failures).
-- [ ] Fix any hydration/data race surfaced in `projects.spec.ts` (or elsewhere)
-      using the documented `toPass` pattern — do not raise timeouts or add retries.
-- [ ] (Optional) `bun run test:e2e --record-durations` to seed
-      `tests/e2e/.spec-durations.json`. With only 2 specs < 4 workers, balancing is
-      skipped (runner falls back to `--shard`), so the file is informational until
-      the suite grows beyond the worker count — commit it only if you want it.
-- [ ] Delete the scaffolding: `rm -rf docs/plans/reference/e2e-isolation` and
-      remove `docs/plans/reference/` if now empty.
-- [ ] Add a project-memory entry capturing the E2E discipline + runner design
-      (host-side — the ralphex container can't write `~/.claude` memory). The
-      `CLAUDE.md` discipline section (Task 7) is the in-repo canonical doc; this
-      memory is the cross-session pointer to it.
+- [x] `bun run test:e2e --workers=1` — builds once, one worker, **retries=0**, green. (server :3100 up, shard0 PASS)
+- [x] `bun run test:e2e` — default 4 workers, all shards green, retries=0. (servers :3100-:3103, 4/4 shards PASS)
+- [x] Re-run `bun run test:e2e` once more to confirm stability (no intermittent failures). (ran `--skip-build` repeat — 4/4 PASS; `.next/cache` clear worked)
+- [x] Fix any hydration/data race surfaced in `projects.spec.ts` (or elsewhere) — **none surfaced**; all runs green at retries=0, no fixes needed.
+- [~] (Optional) `bun run test:e2e --record-durations` — **SKIPPED**: 2 specs < 4 workers, balancing falls back to `--shard`, so a durations file is unused until the suite grows. Regenerate later with `--record-durations`.
+- [x] Delete the scaffolding: `rm -rf docs/plans/reference/e2e-isolation`.
+- [x] Add a project-memory entry capturing the E2E discipline + runner design (host-side).
 
 ## Validation gates
 - **Unit/type/lint (ralph, per task):** `parseRunnerArgs` + all spec-balance
