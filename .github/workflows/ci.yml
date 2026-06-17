@@ -157,11 +157,15 @@ jobs:
       - name: Run codegen and migrations
         run: |
           docker exec $CONTAINER bun run db:generate
+          docker exec $CONTAINER bun run db:ensure-auth-schema
           docker exec $CONTAINER bun run auth:migrate
           docker exec $CONTAINER bun run db:migrate
 
-      - name: Start dev server
-        run: docker exec -d $CONTAINER bun run dev -- --hostname 0.0.0.0 --port 3000
+      - name: Build production bundle
+        run: docker exec $CONTAINER bunx next build
+
+      - name: Start prod server
+        run: docker exec -d -e E2E=1 $CONTAINER bunx next start -p 3000 --hostname 0.0.0.0
 
       - name: Wait for app to be ready
         run: |
@@ -178,7 +182,7 @@ jobs:
           exit 1
 
       - name: E2E tests (shard ${{ matrix.shard }}/4)
-        run: docker exec -e CI=true $CONTAINER bun run test:e2e -- --shard=${{ matrix.shard }}/4
+        run: docker exec -e CI=true -e PLAYWRIGHT_PROD_SERVER=1 $CONTAINER bun run test:e2e -- --shard=${{ matrix.shard }}/4
 
       - name: Upload blob report
         if: always()

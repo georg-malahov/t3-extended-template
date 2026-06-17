@@ -156,7 +156,7 @@ edits described per task. **The final task deletes that reference directory.**
 - [x] Lean validation (`typecheck` must see both files clean).
 
 ### Task 6: CI — prod-server-per-shard
-- [ ] In `.github/workflows/ci.yml`, the `e2e` job:
+- [x] In `.github/workflows/ci.yml`, the `e2e` job:
   - In "Run codegen and migrations", add `docker exec $CONTAINER bun run db:ensure-auth-schema` **before** the `auth:migrate` line.
   - Replace the **"Start dev server"** step with two steps:
     ```yaml
@@ -175,7 +175,7 @@ edits described per task. **The final task deletes that reference directory.**
     (Each shard container runs ONE prod server via `runCiPassthrough`; with no
     committed `.spec-durations.json` it falls back to native `--shard`.)
   - Leave the blob-report upload + `report` merge job unchanged.
-- [ ] Lean validation (YAML well-formed; `bun run lint`/`typecheck`/`test:unit` still green).
+- [x] Lean validation (YAML well-formed; `bun run lint`/`typecheck`/`test:unit` still green).
 
 ### Task 7: documentation — CLAUDE.md discipline & anti-patterns
 - [ ] In `CLAUDE.md` "## Commands" → "Direct commands" table: change the `test:e2e`
