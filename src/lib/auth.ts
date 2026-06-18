@@ -38,6 +38,14 @@ export const auth = betterAuth({
   experimental: {
     joins: true,
   },
+  // Better Auth enables rate limiting by default under NODE_ENV=production. The
+  // E2E suite runs against a production build (`next start`) and signs in many
+  // times per worker, which trips the limiter ("Too many requests") and flakes
+  // login-heavy specs. Disable it ONLY when the E2E flag is set — real prod
+  // (no E2E flag) keeps the default protection.
+  rateLimit: {
+    enabled: process.env.E2E !== "1",
+  },
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,

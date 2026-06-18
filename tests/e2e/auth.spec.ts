@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signUpAndLogin } from "./helpers/auth";
+import { signUpAndLogin, submitSignIn } from "./helpers/auth";
 
 test.describe("auth flows", () => {
   test("sign-up creates account and redirects to dashboard with workspace visible", async ({
@@ -25,7 +25,7 @@ test.describe("auth flows", () => {
     // Sign in with the same credentials
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill(password);
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await submitSignIn(page);
 
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
     await expect(page.getByText("Active workspace")).toBeVisible();
@@ -42,12 +42,12 @@ test.describe("auth flows", () => {
     // Try to sign in with wrong password
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill("wrongpassword123");
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(async () => {
+      await page.getByRole("button", { name: "Sign in" }).click();
+      await expect(page.locator("[data-sonner-toast]")).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 30000 });
 
     // Sonner toast should show an error
-    await expect(page.locator("[data-sonner-toast]")).toBeVisible({
-      timeout: 10000,
-    });
     await expect(page.locator("[data-sonner-toast]")).toContainText(/invalid|incorrect|wrong|error/i);
   });
 

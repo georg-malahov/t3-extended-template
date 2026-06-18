@@ -177,7 +177,9 @@ Policy pattern: `@@allow('read', auth() != null && organization.memberships?[use
 | `bun run typecheck` | TypeScript type checking |
 | `bun run build` | Production build |
 | `bun run test:unit` | Vitest unit tests |
-| `bun run test:e2e` | Playwright E2E tests (Playwright auto-starts dev server) |
+| `bun run test:e2e` | E2E (prod) — N isolated workers (own DB + `next start` each) |
+| `bun run test:e2e:dev` | E2E (dev) — `playwright test --workers=1` vs `next dev`, no build |
+| `bun run test:e2e:pw` | Raw Playwright passthrough; expert escape hatch |
 | `bun run test:e2e:report` | Open Playwright HTML report in browser |
 | `bun run db:generate` | Regenerate ZenStack artifacts (**ALWAYS** after schema.zmodel changes) |
 | `bun run db:migrate` | Deploy pending migrations to PostgreSQL |
@@ -267,6 +269,12 @@ const form = useForm({ resolver: zodResolver(formSchema) });
 - Shared helpers: `tests/e2e/helpers/` (e.g., `auth.ts` for sign-up flows)
 - Reference: `tests/e2e/auth.spec.ts`
 
+**Per-worker isolation runner (`scripts/test-e2e.ts`):** `bun run test:e2e` spins up N isolated stacks (default 4). Each worker gets its own Postgres DB cloned from a once-migrated template and its own `next start` production server. The suite runs fully parallel at `retries=0` on a prod build — flakes are real defects, not noise to retry away. Runner flags: `--workers=N`, `--skip-build`, `--record-durations`, `--no-balance`. Env knobs: `E2E_WORKERS`, `E2E_BASE_PORT`, `E2E_RETRIES`.
+
+**Two run modes:**
+- **Prod** (`bun run test:e2e`) — canonical; builds once, N isolated workers, `retries=0`. Use for CI and final verification.
+- **Dev** (`bun run test:e2e:dev [spec]`) — no build, serial (`--workers=1`) vs `next dev`. Use during spec authoring for fast iteration on a single file.
+
 ### Test Requirements
 
 - Every new feature or bug fix MUST have corresponding tests
@@ -274,6 +282,17 @@ const form = useForm({ resolver: zodResolver(formSchema) });
 - Cover happy path AND at least one error/edge case
 - Unit tests: pure functions, utilities, helpers
 - E2E tests: user flows, CRUD operations, auth flows
+
+### E2E discipline & anti-patterns (retries=0 — flakes are bugs)
+
+1. **No fixed-time waits.** Never `page.waitForTimeout`, `networkidle`, or `waitForLoadState`. Use auto-waiting assertions (`toBeVisible`, `toHaveURL`). A synchronous read (`page.url()`) gets an auto-waiting assertion in front of it, never a sleep.
+2. **Specific locators.** A bare `getByText(...)` / `input[type=file]` breaks strict-mode the moment a second match appears. Scope to a role/testid/parent.
+3. **Prefer unique per-test data; clean up shared state you mutate.** Specs on the same worker share that worker's DB serially. Each test should create its own user/org (as `signUpAndLogin` does). If a spec mutates a shared/singleton row, restore it in `afterAll`.
+4. **Hydration-safe interactions.** Under a prod `next start` build a click can land before React hydration (a lost no-op). Wrap click→effect in a `toPass` retry. See `submitSignIn` in `tests/e2e/helpers/auth.ts`.
+5. **Direct DB access uses the worker DB.** Specs hitting Postgres must read `process.env.DATABASE_URL` via `tests/e2e/helpers/db-url.ts` (`E2E_DATABASE_URL`), never a hardcoded `…/app` — each worker's server writes to `app_wK`.
+6. **Prod-vs-dev divergences are real.** Things off in `next dev` are ON under `next start` (`NODE_ENV=production`): Better Auth **rate limiting** (gated off in `auth.ts` only when `E2E=1`, which the runner/CI set). A login-heavy flake only in prod → suspect rate limiting first.
+7. **Match current app behavior, not stale assumptions.** E2E drifts when not run; verify routes/labels/default views against the source before asserting.
+8. **No long per-assertion timeouts to mask races.** A `{ timeout: 30000 }` makes a real failure take 30s. Fix the underlying race and keep timeouts tight so failures are quick.
 
 ## Autonomous Execution (Ralphex)
 
@@ -383,6 +402,13 @@ All vars are in Doppler. The canonical schema is in `src/lib/env.ts`.
 | `TRACE_ALL` | no | When set (e.g. `1`), capture Playwright traces for all tests, not just failures |
 | `DOPPLER_TOKEN` | no | Doppler service token for secrets (required for ralphex-dk container) |
 | `GH_TOKEN` | no | GitHub personal access token for PR creation (required for ralphex-dk container) |
+| `E2E` | no | Runtime flag — disables Better Auth rate limiting; set by the isolated runner and CI (`E2E=1`) |
+| `E2E_WORKERS` | no | Number of isolated worker stacks to spin up (default: 4) |
+| `E2E_BASE_PORT` | no | Base port for isolated `next start` servers (default: 3100) |
+| `E2E_RETRIES` | no | Playwright retry count for the isolated runner (default: 0 — flakes are bugs) |
+| `E2E_SKIP_BUILD` | no | Skip `next build` in the isolated runner (reuse existing `.next`) |
+| `E2E_RECORD_DURATIONS` | no | Write per-spec durations to `tests/e2e/.spec-durations.json` for future load-balancing |
+| `E2E_NO_BALANCE` | no | Disable spec-duration-based worker balancing; fall back to Playwright `--shard` |
 
 ## Critical Gotchas
 
