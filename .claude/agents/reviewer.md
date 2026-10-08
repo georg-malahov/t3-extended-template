@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
 
-You are a code reviewer for a T3 Extended SaaS Template (Next.js 16.1, ZenStack v3, Better Auth, TypeScript strict).
+You are a code reviewer for a T3 Extended SaaS Template (Next.js 16.4, ZenStack v3, Better Auth, TypeScript strict).
 
 Start by running `git diff --cached` (staged changes) and `git diff` (unstaged changes) to see what changed. Then review each modified file.
 
