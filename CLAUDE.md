@@ -4,9 +4,9 @@
 
 T3 Extended SaaS Template — multi-tenant SaaS starter. Schema-driven development with end-to-end type safety.
 
-**Tech Stack:** Next.js 16.1 (App Router, RSC), React 19.2, TypeScript 5.9 (strict), Bun 1.x,
+**Tech Stack:** Next.js 16.4 (App Router, RSC), React 19.3, TypeScript 5.9 (strict), Bun 1.x,
 ZenStack v3 (schema-first ORM → Prisma + TS types + TanStack Query hooks),
-Better Auth 1.5 (PostgreSQL adapter), PostgreSQL 16, Kysely,
+Better Auth 1.7 (PostgreSQL adapter), PostgreSQL 16, Kysely,
 shadcn/ui, Radix UI, Tailwind CSS 4.2, TanStack Query 5.90, TanStack Table 8.21,
 React Hook Form 7.71, Zod 4.3, next-themes, Lucide React, Sonner,
 Vitest 4.0, Playwright 1.58, Docker, Doppler (env management).

@@ -35,8 +35,10 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://127.0.0.1:3000",
   ].filter((origin): origin is string => Boolean(origin)),
-  experimental: {
-    joins: true,
+  advanced: {
+    database: {
+      joins: true,
+    },
   },
   // Better Auth enables rate limiting by default under NODE_ENV=production. The
   // E2E suite runs against a production build (`next start`) and signs in many
