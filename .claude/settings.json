@@ -108,5 +108,9 @@
     "ralphex@ralphex": true,
     "plannotator@plannotator": true,
     "vercel@claude-plugins-official": true
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }
