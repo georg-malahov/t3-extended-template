@@ -1,6 +1,6 @@
-import { bindDbAuth } from "@/lib/db";
+import { adminDb } from "@/lib/admin-db";
 
-function slugify(input: string) {
+export function slugify(input: string) {
   return input
     .toLowerCase()
     .trim()
@@ -9,18 +9,30 @@ function slugify(input: string) {
     .slice(0, 32);
 }
 
+export function workspaceDefaults(user: { id: string; email: string; name?: string | null }) {
+  const baseName = user.name?.trim() || user.email.split("@")[0] || "workspace";
+  return {
+    name: `${baseName}'s Workspace`,
+    slug: `${slugify(baseName) || "workspace"}-${user.id.slice(0, 6)}`,
+  };
+}
+
+/**
+ * Mirrors the Better Auth account into public.User and, on first call, creates
+ * the user's own workspace with them as OWNER.
+ *
+ * Server-only: called from the Better Auth sign-up hook and the dashboard with
+ * the id/email/name of the SESSION user — never with request input. It writes
+ * through the policy-free `adminDb`, because the schema forbids these writes
+ * through the policy client (and therefore through `/api/model`): otherwise
+ * any signed-in user could create a membership in someone else's workspace.
+ */
 export async function provisionWorkspaceForUser(user: {
   id: string;
   email: string;
   name?: string | null;
 }) {
-  const authedDb = bindDbAuth({
-    id: user.id,
-    email: user.email,
-    name: user.name ?? null,
-  });
-
-  await authedDb.user.upsert({
+  await adminDb.user.upsert({
     where: { id: user.id },
     update: {
       email: user.email,
@@ -33,7 +45,7 @@ export async function provisionWorkspaceForUser(user: {
     },
   });
 
-  const membership = await authedDb.membership.findFirst({
+  const membership = await adminDb.membership.findFirst({
     where: { userId: user.id },
   });
 
@@ -41,13 +53,10 @@ export async function provisionWorkspaceForUser(user: {
     return;
   }
 
-  const baseName = user.name?.trim() || user.email.split("@")[0] || "workspace";
-  const slug = `${slugify(baseName)}-${user.id.slice(0, 6)}`;
-
-  await authedDb.organization.create({
+  // Organization + OWNER membership in one statement (one transaction).
+  await adminDb.organization.create({
     data: {
-      name: `${baseName}'s Workspace`,
-      slug,
+      ...workspaceDefaults(user),
       createdById: user.id,
       memberships: {
         create: [

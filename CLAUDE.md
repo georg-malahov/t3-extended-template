@@ -100,7 +100,7 @@ zenstack/schema.zmodel (Single Source of Truth)
 ### Auth Flow
 
 1. Sign up via Better Auth → session created in `auth` schema
-2. Post-auth hook (`src/lib/provisioning.ts`) creates User, Organization, OWNER Membership in `public` schema
+2. Post-auth hook (`src/lib/provisioning.ts`) creates User, Organization, OWNER Membership in `public` schema — server-side, via the policy-free `adminDb` (clients cannot create these rows)
 3. ZenStack policies enforce multi-tenant access at data layer
 
 ### Architecture Documentation (`docs/architecture/`)
@@ -122,17 +122,20 @@ Living Mermaid-in-Markdown diagrams generated from the codebase. Renders nativel
 
 ## Data Model (`zenstack/schema.zmodel`)
 
-- **User**: `@id String` (matches Better Auth ID), email, memberships. `@@allow('read', auth() != null)`, `@@allow('update', auth().id == id)`
-- **Organization**: cuid id, name, slug (unique), createdById → User, memberships[], projects[]. Read: members only. Update/delete: OWNER only.
-- **Membership**: organizationId + userId (unique), role (OWNER|ADMIN|MEMBER). Read: org members. Manage: OWNER only.
-- **Project**: name, description?, status (ACTIVE|PAUSED|ARCHIVED), organizationId, creatorId. Scoped to org membership.
+- **User**: `@id String` (matches Better Auth ID), email, memberships. Read: yourself + users who share an organization with you. `email` is field-level: readable only by the user themself and by OWNER/ADMIN of a shared organization (plain members get `null`). Update: self, `name` only — `id`/`email` are `@deny('update', true)`. No client create (provisioning writes the row).
+- **Organization**: cuid id, name, slug (unique), createdById → User, memberships[], projects[]. Read: members only. Update/delete: OWNER only; `createdById` is immutable (`post-update` rule). No client create — provisioning creates the workspace together with its OWNER membership.
+- **Membership**: organizationId + userId (unique), role (OWNER|ADMIN|MEMBER). Read: org members. **No create/update through the policy client** (so none via `/api/model`, upsert, nested writes or `$transaction`). Delete: OWNER, never their own membership. New memberships / role changes belong in server actions that check the caller, then write via `adminDb`.
+- **Project**: name, description?, status (ACTIVE|PAUSED|ARCHIVED), organizationId, creatorId. Scoped to org membership; `organizationId`/`creatorId` cannot change after create (`post-update` rule).
+
+**Policy enforcement.** `db` in `src/lib/db.ts` carries `PolicyPlugin` — in ZenStack v3 the `@@allow`/`@@deny` rules do nothing without it. `/api/model` and server components use it via `bindDbAuth()`. `adminDb` (`src/lib/admin-db.ts`) is the policy-free client for trusted server-side writes only (today: `provisionWorkspaceForUser`); never pass request input into it. The route handler has no per-route body filters — the schema decides. `src/lib/tenant-access.db.test.ts` checks the rules against a real Postgres through the same `RPCApiHandler` (skipped when no DB is reachable).
 
 Policy pattern: `@@allow('read', auth() != null && organization.memberships?[userId == auth().id])`
 
 ## Key Files
 
 - `zenstack/schema.zmodel` — THE source of truth for data model
-- `src/lib/db.ts` — ZenStack client, `bindDbAuth()`
+- `src/lib/db.ts` — policy-enforcing ZenStack client (`PolicyPlugin`), `bindDbAuth()`
+- `src/lib/admin-db.ts` — policy-free client for trusted server-side writes only
 - `src/lib/auth.ts` — Better Auth config with provisioning hook
 - `src/lib/session.ts` — `getSession()`, `requireSession()`
 - `src/lib/env.ts` — Validated env vars (Zod)
@@ -415,7 +418,7 @@ All vars are in Doppler. The canonical schema is in `src/lib/env.ts`.
 1. Better Auth `auth` schema vs ZenStack `public` schema are SEPARATE. Never cross them.
 2. ALWAYS `bun run db:generate` then `bun run db:migrate:dev` (to create migration) then `bun run db:migrate` (to deploy) after `schema.zmodel` changes.
 3. `proxy.ts` is OPTIMISTIC only. Real auth is in Server Components + ZenStack policies.
-4. Always use `bindDbAuth()` — bypassing ZenStack bypasses policies.
+4. Always use `bindDbAuth()` — bypassing ZenStack bypasses policies. `adminDb` bypasses them on purpose: only after a server-side authorization check, never with raw request input.
 5. Generated files in `src/lib/zenstack/generated/` are excluded from ESLint. Never edit them.
 6. App requires Doppler-injected env vars. `src/lib/env.ts` validates at startup.
 7. shadcn/ui components are COPIED into `src/components/ui/`, not installed as a package.

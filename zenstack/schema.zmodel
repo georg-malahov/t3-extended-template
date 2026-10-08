@@ -26,8 +26,11 @@ enum ProjectStatus {
 }
 
 model User {
-  id                   String @id
-  email                String @unique
+  id                   String @id @deny('update', true)
+  // Mirror of auth."user".email, written ONLY server-side by provisioning.
+  // Readable by the user themself and by OWNER/ADMIN of an organization the
+  // user belongs to; plain members of the same organization get null.
+  email                String @unique @deny('update', true) @allow('read', auth() != null && (auth().id == id || memberships?[organization.memberships?[userId == auth().id && (role == OWNER || role == ADMIN)]]))
   name                 String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -36,8 +39,11 @@ model User {
   createdProjects      Project[] @relation("ProjectCreator")
 
   @@auth
-  @@allow('create', auth() != null && auth().id == id)
-  @@allow('read', auth() != null)
+  // No client-side create: the public.User row is written only by the server
+  // (src/lib/provisioning.ts, policy-free client) after Better Auth created
+  // the account.
+  // Read: yourself, plus people who share an organization with you.
+  @@allow('read', auth() != null && (auth().id == id || memberships?[organization.memberships?[userId == auth().id]]))
   @@allow('update', auth() != null && auth().id == id)
 }
 
@@ -52,9 +58,14 @@ model Organization {
   memberships Membership[]
   projects    Project[]
 
-  @@allow('create', auth() != null && auth().id == createdById)
+  // No client-side create: a workspace and its first OWNER membership are
+  // created together by the server (src/lib/provisioning.ts, policy-free
+  // client). Add a server action that does the same if users should be able to
+  // create more workspaces.
   @@allow('read', auth() != null && memberships?[userId == auth().id])
   @@allow('update,delete', auth() != null && memberships?[userId == auth().id && role == OWNER])
+  // createdById is set once, by the server.
+  @@deny('post-update', createdById != before().createdById)
 }
 
 model Membership {
@@ -68,11 +79,16 @@ model Membership {
   userId         String
 
   @@unique([organizationId, userId])
-  // Self-assignment: allows provisioning flow to create initial OWNER membership during sign-up.
-  // Note: also permits any authenticated user to join any org by ID — acceptable for this template.
-  @@allow('create', auth() != null && auth().id == userId)
+  // No create/update through the policy client (and therefore none through
+  // /api/model, including upsert, nested writes and $transaction): who belongs
+  // to a workspace and with which role is decided only by server code that
+  // checks the caller first and then writes with the policy-free client
+  // (src/lib/admin-db.ts) — today that is provisioning, which creates the
+  // first OWNER. Add invitations / role changes as server actions.
   @@allow('read', auth() != null && organization.memberships?[userId == auth().id])
-  @@allow('update,delete', auth() != null && organization.memberships?[userId == auth().id && role == OWNER])
+  // An OWNER can remove other members; nobody removes themself (that could
+  // leave a workspace without an owner).
+  @@allow('delete', auth() != null && userId != auth().id && organization.memberships?[userId == auth().id && role == OWNER])
 }
 
 model Project {
@@ -91,4 +107,6 @@ model Project {
   @@allow('create', auth() != null && creatorId == auth().id && organization.memberships?[userId == auth().id])
   // Any org member can update/delete projects — intentional flat-hierarchy design for this template
   @@allow('update,delete', auth() != null && organization.memberships?[userId == auth().id])
+  // A project stays in its workspace and keeps its creator.
+  @@deny('post-update', organizationId != before().organizationId || creatorId != before().creatorId)
 }
