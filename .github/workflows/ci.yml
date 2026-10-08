@@ -154,6 +154,19 @@ jobs:
             sleep 1
           done
 
+      - name: Install this commit's dependencies
+        # The image's node_modules are baked from main's bun.lock (the image is
+        # rebuilt only on push to main). Without this step a PR that changes
+        # dependencies is built and tested against main's packages. On an
+        # unchanged lockfile this is a fast no-op. The image's bun may predate
+        # the lockfile format, and a bumped @playwright/test needs its own
+        # Chromium build — both are brought up to date here.
+        run: |
+          docker exec $CONTAINER bun upgrade --stable || true
+          docker exec $CONTAINER bun --version
+          docker exec $CONTAINER bun install --frozen-lockfile
+          docker exec $CONTAINER bunx playwright install --with-deps chromium
+
       - name: Run codegen and migrations
         run: |
           docker exec $CONTAINER bun run db:generate
